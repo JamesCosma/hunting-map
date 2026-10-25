@@ -19,20 +19,35 @@ Pick a spot by searching for a place name or ZIP code, or by tapping the map. Hu
 - Streets, Topo (OpenTopoMap), and Satellite (Esri World Imagery) base maps. Your choice is remembered.
 - Remembers your last spot, so reopening the app from the home screen shows it right away.
 - Works in Safari on iPhone, including Add to Home Screen (web manifest, Apple touch icon, standalone mode, safe-area insets), and in desktop Chrome and Edge.
+- **Place name and ZIP for any spot.** Tapping the map, picking a search result, or reopening the app shows the nearest named place and ZIP code, for example `Near Indian Springs, Clark County, NV` and `ZIP 89018`. Backcountry spots outside any town show the county and state with `No ZIP`. A slow or failed lookup never holds up the conditions.
+- **Favorites.** Save the selected spot with **Save spot** (the name defaults to its place name and can be edited). The **Favorites** tab lists every saved spot with its temperature, wind speed and direction, humidity, and elevation, loaded for all spots in one request and refreshed when the list is more than 5 minutes old or on demand. Tap a favorite to jump to it on the map and load the full station and model detail. Rename or delete with **Edit**, with undo. Up to 25 favorites are kept on this device.
 - Loading skeletons, clear "not reported" labels for missing values, and friendly error messages with a retry button.
 
 ## Data sources and why
 
-| Need                         | Source                                                                                                                                                                                             | Why                                                                                                                                                                                                            |
-| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Measured observations        | [NWS API](https://www.weather.gov/documentation/services-web-api) (`api.weather.gov`)                                                                                                              | Official, free, no key, CORS enabled. Real sensor readings are the ground truth when a station is close.                                                                                                       |
-| Model estimate and elevation | [Open-Meteo Forecast API](https://open-meteo.com/en/docs)                                                                                                                                          | Free, no key, CORS enabled. Gives values for the exact coordinates (stations can be 30+ miles away in Nevada) and works outside NWS coverage. Its `elevation` field comes from a 90 m digital elevation model. |
-| Place name search            | [Open-Meteo Geocoding](https://open-meteo.com/en/docs/geocoding-api)                                                                                                                               | Free, no key, CORS enabled, and its GeoNames data includes peaks, ranges, and other natural features, not just towns.                                                                                          |
-| Name search fallback         | [Nominatim](https://nominatim.org/) (OpenStreetMap)                                                                                                                                                | Used only when Open-Meteo finds nothing. Called only on explicit submit and at most once per second, per the [usage policy](https://operations.osmfoundation.org/policies/nominatim/).                         |
-| ZIP code search              | [Zippopotam.us](https://www.zippopotam.us/)                                                                                                                                                        | Free, no key, CORS enabled, returns coordinates for US ZIP codes.                                                                                                                                              |
-| Map tiles                    | [OpenStreetMap](https://www.openstreetmap.org/copyright), [OpenTopoMap](https://opentopomap.org/), [Esri World Imagery](https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9) | Free tile sources with attribution shown on the map.                                                                                                                                                           |
+| Need                          | Source                                                                                                                                                                                             | Why                                                                                                                                                                                                            |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Measured observations         | [NWS API](https://www.weather.gov/documentation/services-web-api) (`api.weather.gov`)                                                                                                              | Official, free, no key, CORS enabled. Real sensor readings are the ground truth when a station is close.                                                                                                       |
+| Model estimate and elevation  | [Open-Meteo Forecast API](https://open-meteo.com/en/docs)                                                                                                                                          | Free, no key, CORS enabled. Gives values for the exact coordinates (stations can be 30+ miles away in Nevada) and works outside NWS coverage. Its `elevation` field comes from a 90 m digital elevation model. |
+| Place name search             | [Open-Meteo Geocoding](https://open-meteo.com/en/docs/geocoding-api)                                                                                                                               | Free, no key, CORS enabled, and its GeoNames data includes peaks, ranges, and other natural features, not just towns.                                                                                          |
+| Name search fallback          | [Nominatim](https://nominatim.org/) (OpenStreetMap)                                                                                                                                                | Used only when Open-Meteo finds nothing. Called only on explicit submit and at most once per second, per the [usage policy](https://operations.osmfoundation.org/policies/nominatim/).                         |
+| Place name and ZIP for a spot | [Nominatim reverse](https://nominatim.org/release-docs/latest/api/Reverse/) (OpenStreetMap)                                                                                                        | Free, no key, CORS enabled, and returns town, county, state, and postcode in one call. See [Nominatim fair use](#nominatim-fair-use).                                                                          |
+| ZIP code search               | [Zippopotam.us](https://www.zippopotam.us/)                                                                                                                                                        | Free, no key, CORS enabled, returns coordinates for US ZIP codes.                                                                                                                                              |
+| Map tiles                     | [OpenStreetMap](https://www.openstreetmap.org/copyright), [OpenTopoMap](https://opentopomap.org/), [Esri World Imagery](https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9) | Free tile sources with attribution shown on the map.                                                                                                                                                           |
 
 All of these were verified to return `Access-Control-Allow-Origin: *` and to work from a real browser (headless Chromium) against the production build.
+
+### Nominatim fair use
+
+Search fallback and place name lookups share one request queue that allows at most one Nominatim request per second for the whole app. Place lookups also:
+
+- wait 400 ms after a selection settles, so panning between pins or tapping quickly does not send a request per tap, and cancel the lookup for a spot you have moved away from;
+- are cached in memory for about 100 m around each looked up point (the last 100 points), so going back to a spot or reopening a favorite never asks again;
+- are never retried automatically. A failure just hides the ZIP line, and the refresh button tries again.
+
+Browsers do not allow pages to set a `User-Agent` header, so requests identify the app the way the usage policy asks of web apps: by the `Referer` the browser sends (the default `strict-origin-when-cross-origin` policy sends the site origin). Results are © OpenStreetMap contributors, credited in the app footer.
+
+ZIP codes come from OpenStreetMap postcode data. They are accurate in towns, but for points between towns the nearest tagged postcode may differ from the USPS delivery ZIP.
 
 ### How the station is chosen
 
@@ -43,12 +58,13 @@ All of these were verified to return `Access-Control-Allow-Origin: *` and to wor
 
 ## Architecture
 
-Plain TypeScript with no UI framework. The app is small, and direct DOM rendering keeps the bundle light (about 54 kB gzipped including Leaflet) for slow connections.
+Plain TypeScript with no UI framework. The app is small, and direct DOM rendering keeps the bundle light (about 61 kB gzipped including Leaflet) for slow connections.
 
 ```
 src/
   main.ts               Entry point: wires views to the app controller
   app.ts                Controller: selection, request cancellation, rendering by state
+  favoritesController.ts  Saving spots, the Favorites list, and batched conditions
   config.ts             Endpoints, timeouts, thresholds, storage keys
   types.ts              Shared domain types (Conditions, StationObservation, ...)
   lib/
@@ -59,18 +75,26 @@ src/
     format.ts           Display formatting (temperatures, ages, wind text)
     dom.ts              Tiny element builder (textContent only, never innerHTML)
     storage.ts          localStorage wrapper that never throws
+    favoritesStore.ts   Versioned, validated favorites in localStorage
+    rateLimit.ts        Queueing rate limiter (one Nominatim request per second)
+    lruCache.ts         Small least-recently-used cache
     usStates.ts         State names and abbreviations for "Town, ST" search
   services/
     nws.ts              Nearest usable station observation
-    openMeteo.ts        Model estimate and elevation for the exact point
+    openMeteo.ts        Model estimates for one point or a batch of points
     geocoding.ts        Query classification, ZIP, name, and fallback search
+    nominatim.ts        Shared, rate limited access to Nominatim
+    reverseGeocoding.ts Place name and ZIP for a point, with caching
   ui/
     mapView.ts          Leaflet map, base layers, pin, click and keyboard picking
     searchBox.ts        Search form and keyboard navigable results
     cardView.ts         Card states: placeholder, loading, content, notice, error
     conditionsView.ts   Metric and wind rendering shared by both sources
-    compass.ts          SVG wind compass with an accessible label
-    locationView.ts     Selected spot summary and elevation
+    compass.ts          SVG wind compass and the small wind arrow
+    locationView.ts     Selected spot summary, place name, ZIP, and elevation
+    tabs.ts             Accessible Conditions and Favorites tabs
+    saveFavoriteView.ts Save spot button and its naming form
+    favoritesView.ts    Favorites list with per-row conditions and edit mode
   styles/
     tokens.css          Spacing, type, color, and radius design tokens
     base.css, layout.css, components.css
@@ -83,6 +107,7 @@ Design choices worth knowing:
 - **Services are pure and testable.** Each service takes an optional `fetchImpl` and returns typed results. Expected outcomes such as "outside NWS coverage" are part of the return type, not exceptions.
 - **Every API payload is treated as `unknown`** and narrowed field by field, so an upstream schema change shows "Not reported" instead of crashing.
 - **Stale responses never win.** Each new selection aborts the previous one's requests through an `AbortController`.
+- **Favorites storage is defensive.** Favorites are stored as `{ version: 1, favorites: [...] }` under `hunting-map:favorites`. Every entry is validated on load; invalid or duplicate entries are dropped instead of discarding the whole list, unreadable data starts an empty list, and a newer schema version is read best effort. If the browser refuses to store data (for example in some private browsing modes), the list still works for the session and says so.
 - **Weak signal handling.** 15 second timeouts, one retry with backoff for transient failures (network errors, 429, 5xx), and no preflight requests (only CORS safelisted headers are sent).
 - **Accessibility.** Labeled controls, a skip link, visible focus rings, 44 px tap targets, live regions for loading and errors, an accessible name on the compass, keyboard pin dropping, reduced motion support, and text colors that meet WCAG AA contrast.
 
@@ -113,6 +138,9 @@ The Vite `base` is `/hunting-map/` to match the project Pages URL. If the reposi
 
 - Requires a connection to fetch data. There is no offline cache of readings or map tiles.
 - NWS station coverage in remote areas is sparse; the nearest reporting station can be dozens of miles away and at a very different elevation. Compare it with the model estimate for your exact spot.
+- Favorites live in this browser's local storage, so they do not sync between your iPhone and PC, and clearing site data removes them.
+- The Favorites list shows the model estimate for each spot. Nearest station readings load when you open a favorite, which keeps the list to a single request.
+- Place names come from what OpenStreetMap has nearby. In open country that is usually just the county and state; there is no "nearest town" distance.
 - Model estimates are interpolated from a weather model grid and can miss local effects such as canyon winds and cold air pooling.
 
 ## License
