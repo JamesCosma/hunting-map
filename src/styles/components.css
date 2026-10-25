@@ -311,6 +311,12 @@
   display: none;
 }
 
+/* The stations legend takes the bottom corner on phones, so the hint moves to the top. */
+.map:has(.stations-legend) + .map-hint {
+  top: var(--space-3);
+  bottom: auto;
+}
+
 @media (hover: hover) and (pointer: fine) {
   .map-hint__touch {
     display: none;
@@ -341,6 +347,219 @@
   fill: #fff;
 }
 
+/* ---------- Weather stations layer ---------- */
+/* Doubled selectors outrank Leaflet's own marker styles, which load later. */
+.leaflet-marker-icon.station-pin,
+.leaflet-marker-icon.station-cluster {
+  display: grid;
+  place-items: center;
+  background: none;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.station-pin:focus-visible,
+.station-cluster:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.station-pin__dot {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: var(--kind-color);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 45%);
+}
+
+.station-pin__dot--stale {
+  border: 3px solid var(--kind-color);
+  background: #fff;
+}
+
+.station-cluster__count {
+  display: grid;
+  place-items: center;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 var(--space-1);
+  border: 2px solid #fff;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 45%);
+}
+
+.station-cluster__count--medium {
+  min-width: 34px;
+  height: 34px;
+}
+
+.station-cluster__count--large {
+  min-width: 40px;
+  height: 40px;
+}
+
+.leaflet-popup-content .station-popup p {
+  margin: 0;
+}
+
+.station-popup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 200px;
+  padding-right: var(--space-6); /* clear of the close button */
+}
+
+.station-popup__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.station-popup__name {
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+}
+
+.station-popup__detail {
+  color: var(--color-text-muted);
+}
+
+.station-popup__readings {
+  display: grid;
+  gap: 2px;
+  margin: var(--space-1) 0;
+  padding: var(--space-2) 0;
+  border-block: 1px solid var(--color-border);
+}
+
+.station-popup__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.station-popup__row dt {
+  color: var(--color-text-muted);
+}
+
+.station-popup__row dd {
+  margin: 0;
+  font-weight: var(--weight-semibold);
+  text-align: right;
+}
+
+.stations-legend {
+  max-width: min(260px, calc(100vw - 80px));
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+  font-size: var(--text-sm);
+}
+
+.stations-legend__summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  cursor: pointer;
+  list-style: none;
+}
+
+.stations-legend__summary::-webkit-details-marker {
+  display: none;
+}
+
+.stations-legend__summary::after {
+  content: '';
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-left: auto;
+  border-right: 2px solid currentcolor;
+  border-bottom: 2px solid currentcolor;
+  transform: rotate(-135deg) translate(-2px, -2px);
+  color: var(--color-text-muted);
+}
+
+.stations-legend[open] .stations-legend__summary::after {
+  transform: rotate(45deg) translate(-2px, -2px);
+}
+
+.stations-legend__summary:focus-visible {
+  outline: none;
+  box-shadow: inset var(--focus-ring);
+  border-radius: var(--radius-sm);
+}
+
+.stations-legend__title {
+  font-weight: var(--weight-semibold);
+}
+
+.stations-legend__status {
+  color: var(--color-text-muted);
+}
+
+.stations-legend[data-state='error'] .stations-legend__status {
+  color: var(--color-danger);
+}
+
+.stations-legend__list {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0 var(--space-3) var(--space-2);
+  list-style: none;
+}
+
+.stations-legend__list .station-type {
+  color: var(--color-text);
+  font-weight: var(--weight-regular);
+}
+
+.stations-legend__note {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-3) var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.station-type__dot--stale {
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--station-other);
+  border-radius: 50%;
+  background: #fff;
+}
+
+.stations-legend__retry {
+  min-height: 44px;
+  margin: 0 var(--space-3) var(--space-3);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  font: inherit;
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+}
+
+.stations-legend__retry:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
 /* Leaflet control polish: larger targets and the app's type */
 .leaflet-container {
   font-family: var(--font-sans);
@@ -363,11 +582,43 @@
   padding: var(--space-1) var(--space-2);
 }
 
-.leaflet-control-layers-base label {
+.leaflet-control-layers-base label,
+.leaflet-control-layers-overlays label {
   display: flex;
   align-items: center;
-  min-height: 36px;
+  min-height: 44px;
   font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.leaflet-control-layers-separator {
+  margin: var(--space-1) 0;
+}
+
+/* Popups: app type and a 44 px close button */
+.leaflet-container .leaflet-popup-content-wrapper {
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+
+.leaflet-container .leaflet-popup-content {
+  margin: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+}
+
+.leaflet-container .leaflet-popup a.leaflet-popup-close-button {
+  width: 44px;
+  height: 44px;
+  font-size: 22px;
+  line-height: 44px;
+  color: var(--color-text-muted);
+}
+
+.leaflet-container .leaflet-popup a.leaflet-popup-close-button:focus-visible {
+  outline: none;
+  box-shadow: inset var(--focus-ring);
+  border-radius: var(--radius-sm);
 }
 
 .leaflet-control-layers-selector {

@@ -62,6 +62,7 @@ export interface MapViewOptions {
 export class MapView {
   private readonly map: L.Map;
   private marker: L.Marker | null = null;
+  private layersControl: L.Control.Layers | null = null;
 
   constructor(container: HTMLElement, options: MapViewOptions) {
     this.map = L.map(container, {
@@ -107,7 +108,7 @@ export class MapView {
     const initialName = typeof saved === 'string' && saved in layers ? saved : 'Streets';
     layers[initialName]?.addTo(this.map);
 
-    L.control
+    this.layersControl = L.control
       .layers(layers, undefined, {
         position: 'topright',
         collapsed: window.matchMedia('(max-width: 720px)').matches,
@@ -118,6 +119,17 @@ export class MapView {
     });
   }
 
+  /** The underlying Leaflet map, for overlays that manage their own markers. */
+  get leafletMap(): L.Map {
+    return this.map;
+  }
+
+  /** Adds a toggleable overlay to the layers control, switched on when `active`. */
+  addOverlay(name: string, layer: L.Layer, active: boolean): void {
+    this.layersControl?.addOverlay(layer, name);
+    if (active) layer.addTo(this.map);
+  }
+
   /** Moves the pin. `recenter` pans the map, used for search results but not for taps. */
   setPin(point: LatLon, options: { recenter?: boolean; zoom?: number } = {}): void {
     const latLng = L.latLng(point.lat, point.lon);
@@ -126,6 +138,8 @@ export class MapView {
         icon: PIN_ICON,
         keyboard: false,
         interactive: false,
+        // Keep the chosen spot above station pins.
+        zIndexOffset: 1000,
       }).addTo(this.map);
     } else {
       this.marker.setLatLng(latLng);

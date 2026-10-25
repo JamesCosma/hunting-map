@@ -45,15 +45,28 @@ export const SYNOPTIC_SEARCH_LIMIT = 30;
  */
 export const ELEVATION_PENALTY_MI_PER_1000_FT = 5;
 
-/** Weather stations layer: smallest zoom that loads stations, and the largest area per request. */
-export const STATIONS_LAYER_MIN_ZOOM = 8;
-export const STATIONS_LAYER_MAX_AREA_SQ_DEG = 6;
-/** Station readings for the layer are reused for this long before being refetched. */
-export const STATIONS_LAYER_CACHE_MS = 10 * 60_000;
-/** Wait after the map stops moving before loading stations for the new view. */
-export const STATIONS_LAYER_DEBOUNCE_MS = 600;
-/** The layer shows stations that reported within this window; older than 2 hours is drawn as stale. */
-export const STATIONS_LAYER_WITHIN_MINUTES = 24 * 60;
+/**
+ * Weather stations layer. Stations load for views up to 4 square degrees
+ * (about zoom 8 on a phone, zoom 9 on a desktop), which bounds response size
+ * in dense cities where a single square degree can hold 500+ stations.
+ */
+export const STATIONS_LAYER = {
+  minZoom: 7,
+  maxViewAreaSqDeg: 4,
+  /** Requests cover the view plus this fraction on each side, snapped to this grid in degrees. */
+  padding: 0.25,
+  gridDeg: 0.25,
+  /** Responses are reused this long while the view stays inside them. */
+  cacheMs: 10 * 60_000,
+  cacheEntries: 6,
+  /** Wait after the map stops moving before loading the new view. */
+  debounceMs: 500,
+  /** Stations that reported within this window are shown; older than 2 hours is drawn as stale. */
+  withinMinutes: 24 * 60,
+  /** Pins closer than this many pixels merge into a cluster, up to `clusterMaxZoom`. */
+  clusterRadiusPx: 44,
+  clusterMaxZoom: 13,
+} as const;
 
 /** Maximum number of place search results shown to the user. */
 export const SEARCH_RESULT_LIMIT = 8;

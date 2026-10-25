@@ -3,10 +3,12 @@ import './styles/base.css';
 import './styles/layout.css';
 import './styles/components.css';
 import { App } from './app';
-import { STORAGE_KEYS } from './config';
+import { STORAGE_KEYS, SYNOPTIC_TOKEN } from './config';
 import { FavoritesController, type ResultsTab } from './favoritesController';
 import { requireElement } from './lib/dom';
 import { FavoritesStore } from './lib/favoritesStore';
+import { readJson, writeJson } from './lib/storage';
+import { StationBoxLoader, synopticBoxFetcher } from './services/stationsLayerData';
 import { CardView } from './ui/cardView';
 import { refreshAgeLabels } from './ui/conditionsView';
 import { FavoritesView } from './ui/favoritesView';
@@ -14,6 +16,7 @@ import { LocationView } from './ui/locationView';
 import { MapView } from './ui/mapView';
 import { SaveFavoriteView } from './ui/saveFavoriteView';
 import { SearchBox } from './ui/searchBox';
+import { StationsLayer } from './ui/stationsLayer';
 import { Tabs } from './ui/tabs';
 
 function bootstrap(): void {
@@ -24,6 +27,22 @@ function bootstrap(): void {
       app.pickPoint(point);
     },
   });
+
+  // The stations layer needs Synoptic; builds without a token simply do not offer it.
+  if (SYNOPTIC_TOKEN != null) {
+    const stations = new StationsLayer({
+      map: map.leafletMap,
+      loader: new StationBoxLoader(synopticBoxFetcher(SYNOPTIC_TOKEN)),
+    });
+    map.addOverlay(
+      'Weather stations',
+      stations.group,
+      readJson(STORAGE_KEYS.stationsLayer) === true,
+    );
+    stations.group.on('add remove', (event) => {
+      writeJson(STORAGE_KEYS.stationsLayer, event.type === 'add');
+    });
+  }
 
   new SearchBox(requireElement<HTMLFormElement>('#search-form'), {
     onSelect: (place) => {

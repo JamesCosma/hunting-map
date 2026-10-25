@@ -12,7 +12,7 @@ import { ENDPOINTS } from '../config';
 import { distanceMiles } from '../lib/geo';
 import { RequestError, buildUrl, fetchJson, type FetchJsonOptions } from '../lib/http';
 import { asArray, asNumber, asRecord, asString } from '../lib/json';
-import type { Conditions, LatLon } from '../types';
+import type { Bounds, Conditions, LatLon } from '../types';
 
 const VARIABLES = {
   temperatureF: 'air_temp',
@@ -48,13 +48,6 @@ export interface SynopticStation extends LatLon {
   conditions: Conditions;
   /** Readings removed because they failed Synoptic quality control. */
   qcNotes: string[];
-}
-
-export interface Bounds {
-  south: number;
-  west: number;
-  north: number;
-  east: number;
 }
 
 export type SynopticRequestOptions = Pick<FetchJsonOptions, 'signal' | 'fetchImpl'> & {

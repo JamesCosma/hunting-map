@@ -26,6 +26,14 @@ export interface Conditions {
   wind: Wind;
 }
 
+/** A latitude/longitude box. West is less than east (boxes never cross the antimeridian). */
+export interface Bounds {
+  south: number;
+  west: number;
+  north: number;
+  east: number;
+}
+
 /** Where a station reading came from. */
 export type StationSource = 'nws' | 'synoptic';
 
