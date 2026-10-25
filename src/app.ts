@@ -5,8 +5,8 @@ import { describeError, isAbortError } from './lib/http';
 import { asNumber, asRecord, asString } from './lib/json';
 import { readJson, writeJson } from './lib/storage';
 import { getModelEstimate } from './services/openMeteo';
-import { getNearestObservation, type NwsResult } from './services/nws';
 import { getCachedPlace, reverseGeocode } from './services/reverseGeocoding';
+import { getNearestStation, type StationsResult } from './services/stations';
 import type { ChosenLocation, LatLon, ModelEstimate, PlaceSummary } from './types';
 import { CardView } from './ui/cardView';
 import { renderModelEstimate, renderStationObservation } from './ui/conditionsView';
@@ -154,7 +154,7 @@ export class App {
     views.stationCard.showLoading();
     views.modelCard.showLoading();
 
-    const station = getNearestObservation(location, { signal }).then(
+    const station = getNearestStation(location, { signal }).then(
       (result) => {
         if (!signal.aborted) this.renderStation(result);
       },
@@ -187,23 +187,30 @@ export class App {
     });
   }
 
-  private renderStation(result: NwsResult): void {
+  private renderStation(result: StationsResult): void {
     const card = this.views?.stationCard;
     if (card == null) return;
     switch (result.status) {
       case 'ok':
-        card.showContent(...renderStationObservation(result.observation));
+        card.showContent(
+          ...renderStationObservation(result.observation, {
+            spotElevationFt: result.spotElevationFt,
+            synopticUnavailable: result.synopticUnavailable,
+          }),
+        );
         break;
       case 'outside-coverage':
         card.showNotice(
-          'No NWS stations here',
-          'This spot is outside National Weather Service coverage. Use the model estimate below.',
+          'No weather stations here',
+          'This spot is outside the station networks we search. Use the model estimate below.',
         );
         break;
       case 'no-recent-data':
         card.showNotice(
           'No recent station readings',
-          `None of the ${result.stationsChecked} nearest stations reported in the last 2 hours. Use the model estimate below.`,
+          result.stationsChecked > 0
+            ? `None of the ${result.stationsChecked} nearest stations reported in the last 2 hours. Use the model estimate below.`
+            : 'No nearby station reported in the last 2 hours. Use the model estimate below.',
         );
         break;
     }

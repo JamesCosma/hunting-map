@@ -57,6 +57,14 @@
   --color-focus: #1a5fd0;
   --color-skeleton: #e6e3d8;
   --color-skeleton-shine: #f6f5f0;
+  /* Station types: shared by the station card and the stations map layer, each 4.5:1+ on surface */
+  --station-airport: #1d4ed8;
+  --station-raws: #c2410c;
+  --station-personal: #7c3aed;
+  --station-road: #a16207;
+  --station-snow: #0e7490;
+  --station-mesonet: #be185d;
+  --station-other: #475569;
 
   /* Shape and depth */
   --radius-sm: 8px;

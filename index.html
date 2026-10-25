@@ -23,6 +23,7 @@
 
     <link rel="preconnect" href="https://api.weather.gov" crossorigin />
     <link rel="preconnect" href="https://api.open-meteo.com" crossorigin />
+    <link rel="preconnect" href="https://api.synopticdata.com" crossorigin />
   </head>
   <body>
     <a class="skip-link" href="#conditions">Skip to conditions</a>
@@ -201,7 +202,7 @@
 
           <section id="station-card" class="card" aria-labelledby="station-heading">
             <header class="card__header">
-              <h2 id="station-heading" class="card__title">Nearest station</h2>
+              <h2 id="station-heading" class="card__title">Best nearby station</h2>
               <span class="badge badge--measured">Measured</span>
             </header>
             <div class="card__body" data-card-body aria-live="polite"></div>
@@ -284,8 +285,9 @@
             Station data from the
             <a href="https://www.weather.gov/documentation/services-web-api"
               >National Weather Service</a
-            >. Model estimate and elevation from
-            <a href="https://open-meteo.com/">Open-Meteo</a> (<a
+            >
+            and <a href="https://synopticdata.com/">Synoptic Data</a> (MesoWest). Model estimate and
+            elevation from <a href="https://open-meteo.com/">Open-Meteo</a> (<a
               href="https://creativecommons.org/licenses/by/4.0/"
               >CC BY 4.0</a
             >). Place search by Open-Meteo, <a href="https://www.zippopotam.us/">Zippopotam.us</a>,
