@@ -1,0 +1,81 @@
+/*
+ * Design tokens. Spacing follows a 4 px base scale; type follows a modular
+ * scale. Colors are chosen to meet WCAG AA contrast on their intended
+ * backgrounds (noted beside each pairing).
+ */
+:root {
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* Typography */
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+  --text-xs: 0.75rem; /* 12px */
+  --text-sm: 0.875rem; /* 14px */
+  --text-md: 1rem; /* 16px */
+  --text-lg: 1.125rem; /* 18px */
+  --text-xl: 1.5rem; /* 24px */
+  --text-2xl: 2rem; /* 32px */
+  --text-3xl: 2.5rem; /* 40px */
+  --leading-tight: 1.15;
+  --leading-normal: 1.45;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* Color */
+  --color-bg: #f3f2ec;
+  --color-surface: #ffffff;
+  --color-surface-sunken: #f7f6f2;
+  --color-border: #dddbd1;
+  --color-border-strong: #b9b6a8;
+  --color-text: #1b2420; /* 15.9:1 on surface */
+  --color-text-muted: #55605a; /* 6.6:1 on surface */
+  --color-primary: #1f3d30; /* 11.9:1 with white text */
+  --color-primary-hover: #2b5241;
+  --color-on-primary: #ffffff;
+  --color-on-primary-muted: #c9d8cf; /* 8.0:1 on primary */
+  --color-accent: #d9540f; /* blaze orange, graphics only */
+  --color-accent-text: #b54205; /* 5.6:1 on surface */
+  --color-measured-bg: #e2efe6;
+  --color-measured-text: #1d5034; /* 7.9:1 on its bg */
+  --color-model-bg: #e4ebf5;
+  --color-model-text: #23436a; /* 8.4:1 on its bg */
+  --color-danger: #a8261b; /* 7.1:1 on surface */
+  --color-danger-bg: #fcebe8;
+  --color-notice-bg: #fbf4e3;
+  --color-notice-border: #e8d4a2;
+  --color-focus: #1a5fd0;
+  --color-skeleton: #e6e3d8;
+  --color-skeleton-shine: #f6f5f0;
+
+  /* Shape and depth */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+  --shadow-sm: 0 1px 2px rgb(27 36 32 / 6%);
+  --shadow-md: 0 1px 2px rgb(27 36 32 / 6%), 0 4px 12px rgb(27 36 32 / 8%);
+  --shadow-lg: 0 8px 28px rgb(27 36 32 / 18%);
+
+  /* Interaction */
+  --tap-target: 44px;
+  --focus-ring: 0 0 0 3px var(--color-focus);
+  --duration-fast: 120ms;
+
+  /* Layout */
+  --panel-width: 440px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+}

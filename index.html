@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Hunting Map: current conditions and elevation anywhere in the US</title>
+    <meta
+      name="description"
+      content="Pick any spot in the US to see the nearest weather station reading, a model estimate for that exact spot, wind direction, and elevation."
+    />
+    <meta name="theme-color" content="#1f3d30" />
+    <meta name="color-scheme" content="light" />
+
+    <!-- iOS Add to Home Screen -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Hunting Map" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <link rel="preconnect" href="https://api.weather.gov" crossorigin />
+    <link rel="preconnect" href="https://api.open-meteo.com" crossorigin />
+  </head>
+  <body>
+    <a class="skip-link" href="#conditions">Skip to conditions</a>
+    <div class="app">
+      <header class="app-top">
+        <div class="brand">
+          <img class="brand__mark" src="/icons/favicon.svg" alt="" width="36" height="36" />
+          <div>
+            <h1 class="brand__name">Hunting Map</h1>
+            <p class="brand__tagline">Conditions and elevation for any spot</p>
+          </div>
+        </div>
+
+        <form id="search-form" class="search" role="search" novalidate>
+          <label class="search__label" for="search-input">Search a place or US ZIP code</label>
+          <div class="search__row">
+            <input
+              id="search-input"
+              class="search__input"
+              type="search"
+              name="q"
+              placeholder="Tonopah, NV or 89031"
+              autocomplete="off"
+              autocapitalize="words"
+              spellcheck="false"
+              enterkeyhint="search"
+              aria-describedby="search-status"
+            />
+            <button class="button button--primary search__submit" type="submit">Search</button>
+          </div>
+          <p
+            id="search-status"
+            class="search__status"
+            data-search-status
+            aria-live="polite"
+            hidden
+          ></p>
+          <ul class="search__results" data-search-results aria-label="Search results" hidden></ul>
+        </form>
+      </header>
+
+      <section class="map-pane" aria-label="Map">
+        <div
+          id="map"
+          class="map"
+          tabindex="0"
+          role="application"
+          aria-label="Map. Tap or click to drop a pin. With the keyboard, use arrow keys to pan and press Enter to drop a pin at the center."
+        ></div>
+        <p class="map-hint" aria-hidden="true">
+          <span class="map-hint__touch">Tap the map to drop a pin</span>
+          <span class="map-hint__pointer">Click the map to drop a pin</span>
+        </p>
+      </section>
+
+      <main id="conditions" class="results" tabindex="-1">
+        <section id="location-summary" class="location" aria-labelledby="location-heading" hidden>
+          <div class="location__text">
+            <h2 id="location-heading" class="eyebrow">Selected spot</h2>
+            <p class="location__name" data-location-name></p>
+            <p class="location__region" data-location-region hidden></p>
+            <p class="location__coords" data-location-coords></p>
+          </div>
+          <div class="location__elevation">
+            <span class="eyebrow">Elevation</span>
+            <span class="location__elevation-value" data-location-elevation></span>
+          </div>
+          <button
+            class="icon-button location__refresh"
+            type="button"
+            data-refresh
+            aria-label="Refresh conditions"
+          >
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+              <path
+                d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+        </section>
+
+        <section id="station-card" class="card" aria-labelledby="station-heading">
+          <header class="card__header">
+            <h2 id="station-heading" class="card__title">Nearest station</h2>
+            <span class="badge badge--measured">Measured</span>
+          </header>
+          <div class="card__body" data-card-body aria-live="polite"></div>
+        </section>
+
+        <section id="model-card" class="card" aria-labelledby="model-heading">
+          <header class="card__header">
+            <h2 id="model-heading" class="card__title">This exact spot</h2>
+            <span class="badge badge--model">Model estimate</span>
+          </header>
+          <div class="card__body" data-card-body aria-live="polite"></div>
+        </section>
+
+        <footer class="credits">
+          <p>
+            Station data from the
+            <a href="https://www.weather.gov/documentation/services-web-api"
+              >National Weather Service</a
+            >. Model estimate and elevation from
+            <a href="https://open-meteo.com/">Open-Meteo</a> (<a
+              href="https://creativecommons.org/licenses/by/4.0/"
+              >CC BY 4.0</a
+            >). Place search by Open-Meteo, <a href="https://www.zippopotam.us/">Zippopotam.us</a>,
+            and <a href="https://nominatim.org/">Nominatim</a>.
+          </p>
+          <p>Conditions change fast in the backcountry. Always confirm before you rely on them.</p>
+        </footer>
+      </main>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
