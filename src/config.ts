@@ -8,6 +8,7 @@ export const ENDPOINTS = {
   openMeteoGeocoding: 'https://geocoding-api.open-meteo.com/v1/search',
   zippopotam: 'https://api.zippopotam.us/us',
   nominatimSearch: 'https://nominatim.openstreetmap.org/search',
+  nominatimReverse: 'https://nominatim.openstreetmap.org/reverse',
 } as const;
 
 /** Per-request timeout. Generous because the app is often used on weak backcountry signal. */
@@ -31,6 +32,18 @@ export const DEFAULT_VIEW = { lat: 36.24, lon: -115.12, zoom: 9 } as const;
 
 /** Zoom level used after a place is chosen from search. */
 export const PLACE_ZOOM = 11;
+
+/**
+ * Nominatim's usage policy allows at most one request per second from a client.
+ * Shared by place search and reverse lookups so the two can never burst together.
+ */
+export const NOMINATIM_MIN_INTERVAL_MS = 1000;
+
+/** Delay before looking up a tapped point's place name, so rapid taps send one request. */
+export const REVERSE_GEOCODE_DEBOUNCE_MS = 400;
+
+/** Reverse lookups are cached per ~100 m cell (3 decimal places) for the session. */
+export const REVERSE_GEOCODE_CACHE_SIZE = 100;
 
 export const STORAGE_KEYS = {
   lastLocation: 'hunting-map:last-location',

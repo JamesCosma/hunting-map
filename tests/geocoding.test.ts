@@ -4,9 +4,9 @@ import {
   parseNominatim,
   parseOpenMeteoGeocoding,
   parseZippopotam,
-  resetNominatimThrottle,
   searchPlaces,
 } from '../src/services/geocoding';
+import { resetNominatimThrottle } from '../src/services/nominatim';
 import { jsonResponse, stubFetch } from './helpers';
 
 beforeEach(() => {

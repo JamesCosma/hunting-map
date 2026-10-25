@@ -58,3 +58,14 @@ export interface PlaceResult extends LatLon {
   region: string;
   source: 'open-meteo' | 'zippopotam' | 'nominatim';
 }
+
+/** What a reverse lookup says about a point: the area's name and its ZIP code. */
+export interface PlaceSummary {
+  /**
+   * Readable area, for example "Near Indian Springs, Clark County, NV", or just
+   * "Nye County, NV" where there is no town. Null when nothing is named here (offshore).
+   */
+  label: string | null;
+  /** Five digit US ZIP code, or null where the point has none. */
+  zip: string | null;
+}

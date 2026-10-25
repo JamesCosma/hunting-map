@@ -30,6 +30,11 @@ export function formatCoordinates(lat: number, lon: number): string {
   return `${Math.abs(lat).toFixed(4)}° ${ns}, ${Math.abs(lon).toFixed(4)}° ${ew}`;
 }
 
+/** "ZIP 89018", or "No ZIP" for points outside any ZIP code (common in the backcountry). */
+export function formatZip(zip: string | null): string {
+  return zip == null ? 'No ZIP' : `ZIP ${zip}`;
+}
+
 /** Wind speeds below this many mph are reported as calm, matching NWS practice. */
 export const CALM_THRESHOLD_MPH = 1;
 

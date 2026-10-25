@@ -3,13 +3,14 @@
  * geocoder (GeoNames data, includes towns, peaks and ranges). If Open-Meteo
  * has no match we fall back to OpenStreetMap Nominatim, which knows many
  * named areas GeoNames lacks. Nominatim is only called on an explicit submit,
- * at most once per second, as its usage policy requires.
+ * through the shared rate limiter in nominatim.ts.
  */
 import { ENDPOINTS, SEARCH_RESULT_LIMIT } from '../config';
 import { buildUrl, fetchJson, RequestError, type FetchJsonOptions } from '../lib/http';
 import { asArray, asNumber, asRecord, asString } from '../lib/json';
 import { resolveStateName } from '../lib/usStates';
 import type { PlaceResult } from '../types';
+import { requestNominatim } from './nominatim';
 
 type RequestOptions = Pick<FetchJsonOptions, 'signal' | 'fetchImpl'>;
 
@@ -115,20 +116,12 @@ export function parseNominatim(json: unknown): PlaceResult[] {
   });
 }
 
-const NOMINATIM_MIN_INTERVAL_MS = 1000;
-let lastNominatimRequest = 0;
-
-async function searchNominatim(text: string, options: RequestOptions): Promise<PlaceResult[]> {
-  const wait = lastNominatimRequest + NOMINATIM_MIN_INTERVAL_MS - Date.now();
-  if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
-  lastNominatimRequest = Date.now();
-  const url = buildUrl(ENDPOINTS.nominatimSearch, {
-    q: text,
-    countrycodes: 'us',
-    format: 'jsonv2',
-    limit: SEARCH_RESULT_LIMIT,
-  });
-  return parseNominatim(await fetchJson(url, { ...options, retries: 0 }));
+function searchNominatim(text: string, options: RequestOptions): Promise<PlaceResult[]> {
+  return requestNominatim(
+    ENDPOINTS.nominatimSearch,
+    { q: text, countrycodes: 'us', format: 'jsonv2', limit: SEARCH_RESULT_LIMIT },
+    options,
+  ).then(parseNominatim);
 }
 
 /** Searches for places in the US. Resolves to an empty array when nothing matches. */
@@ -167,9 +160,4 @@ export async function searchPlaces(
       return searchNominatim(fallbackText, options);
     }
   }
-}
-
-/** Test hook: resets the Nominatim rate limiter. */
-export function resetNominatimThrottle(): void {
-  lastNominatimRequest = 0;
 }
