@@ -1,4 +1,4 @@
-import { PLACE_ZOOM, STORAGE_KEYS } from './config';
+import { PLACE_ZOOM, REVERSE_GEOCODE_DEBOUNCE_MS, STORAGE_KEYS } from './config';
 import { formatCoordinates } from './lib/format';
 import { isValidLatLon } from './lib/geo';
 import { describeError, isAbortError } from './lib/http';
@@ -6,10 +6,11 @@ import { asNumber, asRecord, asString } from './lib/json';
 import { readJson, writeJson } from './lib/storage';
 import { getModelEstimate } from './services/openMeteo';
 import { getNearestObservation, type NwsResult } from './services/nws';
-import type { ChosenLocation, LatLon, ModelEstimate } from './types';
+import { getCachedPlace, reverseGeocode } from './services/reverseGeocoding';
+import type { ChosenLocation, LatLon, ModelEstimate, PlaceSummary } from './types';
 import { CardView } from './ui/cardView';
 import { renderModelEstimate, renderStationObservation } from './ui/conditionsView';
-import { LocationView } from './ui/locationView';
+import { DROPPED_PIN_LABEL, LocationView } from './ui/locationView';
 import type { MapView } from './ui/mapView';
 
 export interface AppViews {
@@ -23,10 +24,17 @@ export interface AppViews {
  * Coordinates the views and data services. Each new selection cancels the
  * previous one's in-flight requests, so a slow response for an old pin can
  * never overwrite data for the current pin.
+ *
+ * The place name lookup runs separately from the weather requests: it is
+ * debounced (Nominatim allows one request per second) and its failure only
+ * hides the ZIP, never the conditions.
  */
 export class App {
   private current: ChosenLocation | null = null;
   private controller: AbortController | null = null;
+  private placeController: AbortController | null = null;
+  private placeTimer: ReturnType<typeof setTimeout> | undefined;
+  private place: PlaceSummary | null = null;
   private views: AppViews | null = null;
 
   attach(views: AppViews): void {
@@ -43,7 +51,7 @@ export class App {
   /** Called when the user taps the map. */
   pickPoint(point: LatLon): void {
     this.select(
-      { ...point, label: 'Dropped pin', detail: formatCoordinates(point.lat, point.lon) },
+      { ...point, label: DROPPED_PIN_LABEL, detail: formatCoordinates(point.lat, point.lon) },
       { recenter: false },
     );
   }
@@ -55,10 +63,51 @@ export class App {
     this.views.location.showLocation(location);
     if (options.persist !== false) writeJson(STORAGE_KEYS.lastLocation, location);
     this.load();
+    this.loadPlace();
   }
 
   refresh(): void {
-    if (this.current != null) this.load();
+    if (this.current == null) return;
+    this.load();
+    // Place names do not change; only retry the lookup if it has not succeeded yet.
+    if (this.place == null) this.loadPlace();
+  }
+
+  private loadPlace(): void {
+    const views = this.views;
+    const location = this.current;
+    if (views == null || location == null) return;
+
+    clearTimeout(this.placeTimer);
+    this.placeController?.abort();
+    this.placeController = null;
+    this.place = null;
+
+    const cached = getCachedPlace(location);
+    if (cached != null) {
+      this.showPlace(cached);
+      return;
+    }
+
+    views.location.setPlace({ kind: 'loading' });
+    this.placeTimer = setTimeout(() => {
+      const controller = new AbortController();
+      this.placeController = controller;
+      reverseGeocode(location, { signal: controller.signal }).then(
+        (place) => {
+          if (!controller.signal.aborted) this.showPlace(place);
+        },
+        (error: unknown) => {
+          if (controller.signal.aborted || isAbortError(error)) return;
+          views.location.setPlace({ kind: 'unavailable' });
+        },
+      );
+    }, REVERSE_GEOCODE_DEBOUNCE_MS);
+  }
+
+  private showPlace(place: PlaceSummary): void {
+    this.place = place;
+    this.views?.location.setPlace({ kind: 'ready', place });
   }
 
   private load(): void {

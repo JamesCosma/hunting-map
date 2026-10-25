@@ -340,8 +340,44 @@
   margin-top: 2px;
 }
 
+.location__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  margin-top: var(--space-1);
+}
+
 .location__coords {
   font-variant-numeric: tabular-nums;
+}
+
+/* ZIP code pill beside the coordinates; muted when the point has no ZIP. */
+.zip-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-sunken);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  color: var(--color-text);
+}
+
+.zip-chip[data-empty='true'] {
+  color: var(--color-text-muted);
+  font-weight: var(--weight-medium);
+}
+
+.zip-chip:has(.skeleton) {
+  padding: 0;
+  border: 0;
+  background: none;
 }
 
 .location__elevation {
@@ -718,6 +754,12 @@
   width: 76px;
   height: 76px;
   border-radius: 50%;
+}
+
+.skeleton--chip {
+  width: 72px;
+  height: 22px;
+  border-radius: var(--radius-pill);
 }
 
 .skeleton--inline {

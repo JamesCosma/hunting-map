@@ -84,7 +84,11 @@
             <h2 id="location-heading" class="eyebrow">Selected spot</h2>
             <p class="location__name" data-location-name></p>
             <p class="location__region" data-location-region hidden></p>
-            <p class="location__coords" data-location-coords></p>
+            <p class="location__meta">
+              <span class="zip-chip" data-location-zip hidden></span>
+              <span class="location__coords" data-location-coords></span>
+            </p>
+            <p class="visually-hidden" data-location-announce aria-live="polite"></p>
           </div>
           <div class="location__elevation">
             <span class="eyebrow">Elevation</span>
@@ -135,7 +139,8 @@
               href="https://creativecommons.org/licenses/by/4.0/"
               >CC BY 4.0</a
             >). Place search by Open-Meteo, <a href="https://www.zippopotam.us/">Zippopotam.us</a>,
-            and <a href="https://nominatim.org/">Nominatim</a>.
+            and <a href="https://nominatim.org/">Nominatim</a>. Place names and ZIP codes &copy;
+            <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors.
           </p>
           <p>Conditions change fast in the backcountry. Always confirm before you rely on them.</p>
         </footer>
