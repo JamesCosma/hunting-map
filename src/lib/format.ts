@@ -49,6 +49,13 @@ export function formatWindDirection(deg: number | null, speedMph: number | null)
   return `From ${toCompassPoint(deg)} (${Math.round(deg)}°)`;
 }
 
+/** Compact wind for list rows: "12 mph SW", "12 mph", "Calm" or the not-reported text. */
+export function formatWindShort(speedMph: number | null, deg: number | null): string {
+  if (isCalm(speedMph)) return 'Calm';
+  if (speedMph == null) return NOT_REPORTED;
+  return deg == null ? formatSpeed(speedMph) : `${formatSpeed(speedMph)} ${toCompassPoint(deg)}`;
+}
+
 /**
  * Relative age such as "just now", "12 min ago", "3 hr 5 min ago".
  * `now` is injectable to keep the function pure and testable.

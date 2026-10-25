@@ -11,10 +11,13 @@ export function readJson(key: string): unknown {
   }
 }
 
-export function writeJson(key: string, value: unknown): void {
+/** Returns false when storage rejected the write (quota exceeded, privacy mode). */
+export function writeJson(key: string, value: unknown): boolean {
   try {
     window.localStorage.setItem(key, JSON.stringify(value));
+    return true;
   } catch {
-    // Storage is a convenience only; ignore quota and privacy-mode errors.
+    // Storage is a convenience only; callers that care can check the result.
+    return false;
   }
 }

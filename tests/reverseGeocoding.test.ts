@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { formatZip } from '../src/lib/format';
 import { RequestError } from '../src/lib/http';
 import { searchPlaces } from '../src/services/geocoding';
 import { resetNominatimThrottle } from '../src/services/nominatim';
@@ -108,13 +107,6 @@ describe('parseReverseGeocode', () => {
   it('returns an empty summary for unmatched points such as open ocean', () => {
     expect(parseReverseGeocode({ error: 'Unable to geocode' })).toEqual({ label: null, zip: null });
     expect(parseReverseGeocode(null)).toEqual({ label: null, zip: null });
-  });
-});
-
-describe('formatZip', () => {
-  it('formats present and missing ZIP codes', () => {
-    expect(formatZip('89018')).toBe('ZIP 89018');
-    expect(formatZip(null)).toBe('No ZIP');
   });
 });
 

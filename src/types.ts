@@ -69,3 +69,15 @@ export interface PlaceSummary {
   /** Five digit US ZIP code, or null where the point has none. */
   zip: string | null;
 }
+
+/** A spot the user saved on this device. */
+export interface Favorite extends LatLon {
+  id: string;
+  /** User editable name, for example "North ridge stand". */
+  name: string;
+  /** Place label from the reverse lookup at save time, shown under the name. */
+  place: string | null;
+  zip: string | null;
+  /** When it was saved, in milliseconds since the epoch. */
+  createdAt: number;
+}

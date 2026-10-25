@@ -9,6 +9,8 @@ import {
   formatSpeed,
   formatTemperature,
   formatWindDirection,
+  formatWindShort,
+  formatZip,
 } from '../src/lib/format';
 
 describe('value formatting', () => {
@@ -72,5 +74,19 @@ describe('formatAge', () => {
 
   it('treats small clock skew into the future as just now', () => {
     expect(formatAge(new Date(now.getTime() + 30_000), now)).toBe('just now');
+  });
+});
+
+describe('place and list formatting', () => {
+  it('formats present and missing ZIP codes', () => {
+    expect(formatZip('89018')).toBe('ZIP 89018');
+    expect(formatZip(null)).toBe('No ZIP');
+  });
+
+  it('formats compact wind for list rows', () => {
+    expect(formatWindShort(12.4, 225)).toBe('12 mph SW');
+    expect(formatWindShort(12.4, null)).toBe('12 mph');
+    expect(formatWindShort(0.4, 225)).toBe('Calm');
+    expect(formatWindShort(null, 225)).toBe(NOT_REPORTED);
   });
 });

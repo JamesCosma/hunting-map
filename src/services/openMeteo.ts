@@ -5,7 +5,7 @@
  */
 import { ENDPOINTS } from '../config';
 import { buildUrl, fetchJson, type FetchJsonOptions } from '../lib/http';
-import { asNumber, asRecord } from '../lib/json';
+import { asArray, asNumber, asRecord } from '../lib/json';
 import { metersToFeet } from '../lib/units';
 import type { LatLon, ModelEstimate } from '../types';
 
@@ -17,10 +17,15 @@ const CURRENT_FIELDS = [
   'wind_gusts_10m',
 ].join(',');
 
-export function buildForecastUrl({ lat, lon }: LatLon): string {
+/**
+ * Builds a forecast URL for one or more points. Open-Meteo accepts
+ * comma-separated coordinate lists and answers with one entry per point,
+ * which lets the favorites list load with a single request.
+ */
+function forecastUrl(points: readonly LatLon[]): string {
   return buildUrl(ENDPOINTS.openMeteoForecast, {
-    latitude: lat.toFixed(4),
-    longitude: lon.toFixed(4),
+    latitude: points.map((p) => p.lat.toFixed(4)).join(','),
+    longitude: points.map((p) => p.lon.toFixed(4)).join(','),
     current: CURRENT_FIELDS,
     temperature_unit: 'fahrenheit',
     wind_speed_unit: 'mph',
@@ -28,6 +33,14 @@ export function buildForecastUrl({ lat, lon }: LatLon): string {
     timeformat: 'unixtime',
     timezone: 'GMT',
   });
+}
+
+export function buildForecastUrl(point: LatLon): string {
+  return forecastUrl([point]);
+}
+
+export function buildBatchForecastUrl(points: readonly LatLon[]): string {
+  return forecastUrl(points);
 }
 
 export class InvalidModelResponseError extends Error {
@@ -63,4 +76,35 @@ export async function getModelEstimate(
   options: Pick<FetchJsonOptions, 'signal' | 'fetchImpl'> = {},
 ): Promise<ModelEstimate> {
   return parseModelEstimate(await fetchJson(buildForecastUrl(point), options));
+}
+
+/**
+ * Parses a multi-point response into estimates in input order. A point whose
+ * entry is missing or malformed gets null, so one bad row never hides the rest.
+ */
+export function parseModelEstimates(json: unknown, count: number): (ModelEstimate | null)[] {
+  // A single point comes back as an object rather than a one-element array.
+  const entries = Array.isArray(json) ? asArray(json) : [json];
+  const estimates: (ModelEstimate | null)[] = Array.from({ length: count }, () => null);
+  entries.forEach((entry, position) => {
+    // Entries after the first carry `location_id`, their index in the request.
+    const index = asNumber(asRecord(entry).location_id) ?? position;
+    if (!Number.isInteger(index) || index < 0 || index >= count) return;
+    try {
+      estimates[index] = parseModelEstimate(entry);
+    } catch (error) {
+      if (!(error instanceof InvalidModelResponseError)) throw error;
+    }
+  });
+  return estimates;
+}
+
+/** Model estimates for several points in one request. Resolves to [] for no points. */
+export async function getModelEstimates(
+  points: readonly LatLon[],
+  options: Pick<FetchJsonOptions, 'signal' | 'fetchImpl'> = {},
+): Promise<(ModelEstimate | null)[]> {
+  if (points.length === 0) return [];
+  const json = await fetchJson(buildBatchForecastUrl(points), options);
+  return parseModelEstimates(json, points.length);
 }

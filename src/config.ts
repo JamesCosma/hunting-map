@@ -45,7 +45,17 @@ export const REVERSE_GEOCODE_DEBOUNCE_MS = 400;
 /** Reverse lookups are cached per ~100 m cell (3 decimal places) for the session. */
 export const REVERSE_GEOCODE_CACHE_SIZE = 100;
 
+/** Most favorites a device can hold. Also keeps the batched weather request URL short. */
+export const MAX_FAVORITES = 25;
+
+/** Longest allowed favorite name, in characters. */
+export const FAVORITE_NAME_MAX_LENGTH = 60;
+
+/** Favorites conditions older than this are refetched when the list is opened. */
+export const FAVORITES_STALE_AFTER_MS = 5 * 60_000;
+
 export const STORAGE_KEYS = {
   lastLocation: 'hunting-map:last-location',
   baseLayer: 'hunting-map:base-layer',
+  favorites: 'hunting-map:favorites',
 } as const;
