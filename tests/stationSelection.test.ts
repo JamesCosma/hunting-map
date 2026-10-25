@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  MISSING_READING_PENALTY_MI,
   UNKNOWN_ELEVATION_DIFFERENCE_FT,
   chooseStation,
   completeness,
@@ -87,18 +88,30 @@ describe('mergeCandidates', () => {
 
 describe('stationScore', () => {
   it('adds 5 miles per 1,000 ft of elevation difference', () => {
-    expect(stationScore({ distanceMi: 10, elevationFt: 7000 }, 5000)).toBe(20);
-    expect(stationScore({ distanceMi: 10, elevationFt: 4000 }, 5000)).toBe(15);
+    expect(stationScore(makeObservation({ distanceMi: 10, elevationFt: 7000 }), 5000)).toBe(20);
+    expect(stationScore(makeObservation({ distanceMi: 10, elevationFt: 4000 }), 5000)).toBe(15);
   });
 
   it('uses distance alone without a spot elevation', () => {
-    expect(stationScore({ distanceMi: 10, elevationFt: 9000 }, null)).toBe(10);
+    expect(stationScore(makeObservation({ distanceMi: 10, elevationFt: 9000 }), null)).toBe(10);
   });
 
   it('assumes a moderate difference when the station lists no elevation', () => {
-    expect(stationScore({ distanceMi: 10, elevationFt: null }, 5000)).toBe(
+    expect(stationScore(makeObservation({ distanceMi: 10, elevationFt: null }), 5000)).toBe(
       10 + (UNKNOWN_ELEVATION_DIFFERENCE_FT / 1000) * 5,
     );
+  });
+});
+
+describe('stationScore completeness', () => {
+  it('adds a small penalty for each missing humidity or wind reading', () => {
+    const tempOnly = makeObservation({ distanceMi: 2 });
+    tempOnly.conditions = {
+      temperatureF: 50,
+      relativeHumidity: null,
+      wind: { speedMph: null, gustMph: null, directionDeg: null },
+    };
+    expect(stationScore(tempOnly, null)).toBe(2 + 2 * MISSING_READING_PENALTY_MI);
   });
 });
 

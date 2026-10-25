@@ -42,7 +42,9 @@ describe('station card', () => {
       ),
     );
     expect(content).toContain('Listed elevation (1,763 ft) looks like meters');
-    expect(content).toContain('Chosen over 2 closer stations at a less similar elevation.');
+    expect(content).toContain(
+      'Chosen over 2 closer stations at a less similar elevation or with fewer readings.',
+    );
     expect(content).toContain('Skipped 1 closer station with no recent reading.');
     expect(content).toContain('failed quality control');
     expect(content).toContain('showing NWS only');

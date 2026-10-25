@@ -147,7 +147,9 @@ export function renderStationObservation(
   if (elevationCheck != null) hints.push(hint(elevationCheckNote(elevationCheck)));
   if (passedOverCloser > 0) {
     hints.push(
-      hint(`Chosen over ${plural(passedOverCloser, 'station')} at a less similar elevation.`),
+      hint(
+        `Chosen over ${plural(passedOverCloser, 'station')} at a less similar elevation or with fewer readings.`,
+      ),
     );
   }
   if (skippedCloser > 0) {

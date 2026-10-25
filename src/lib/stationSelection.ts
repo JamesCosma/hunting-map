@@ -20,6 +20,13 @@ export interface StationCandidate {
 /** Elevation difference assumed for a station that lists no elevation. */
 export const UNKNOWN_ELEVATION_DIFFERENCE_FT = 500;
 
+/**
+ * Distance-equivalent penalty for each missing core reading (humidity, wind
+ * speed). Air quality monitors and some mesonets report temperature only; a
+ * complete station a little farther away is usually more useful.
+ */
+export const MISSING_READING_PENALTY_MI = 2;
+
 /** Readings closer together than this are considered equally fresh when merging duplicates. */
 const SAME_TIME_MS = 5 * 60_000;
 
@@ -81,24 +88,30 @@ export function mergeCandidates(candidates: readonly StationCandidate[]): Statio
 }
 
 /**
- * Lower is better: distance in miles plus a distance-equivalent penalty for
- * elevation difference. Without a spot elevation, distance alone decides.
+ * Lower is better: distance in miles, plus a distance-equivalent penalty for
+ * elevation difference from the spot (skipped when the spot elevation is
+ * unknown), plus a small penalty per missing humidity or wind reading.
  */
 export function stationScore(
-  observation: Pick<StationObservation, 'distanceMi' | 'elevationFt'>,
+  observation: Pick<StationObservation, 'distanceMi' | 'elevationFt' | 'conditions'>,
   spotElevationFt: number | null,
 ): number {
-  if (spotElevationFt == null) return observation.distanceMi;
-  const difference =
-    observation.elevationFt == null
-      ? UNKNOWN_ELEVATION_DIFFERENCE_FT
-      : Math.abs(observation.elevationFt - spotElevationFt);
-  return observation.distanceMi + (difference / 1000) * ELEVATION_PENALTY_MI_PER_1000_FT;
+  const { relativeHumidity, wind } = observation.conditions;
+  const missing = [relativeHumidity, wind.speedMph].filter((value) => value == null).length;
+  let score = observation.distanceMi + missing * MISSING_READING_PENALTY_MI;
+  if (spotElevationFt != null) {
+    const difference =
+      observation.elevationFt == null
+        ? UNKNOWN_ELEVATION_DIFFERENCE_FT
+        : Math.abs(observation.elevationFt - spotElevationFt);
+    score += (difference / 1000) * ELEVATION_PENALTY_MI_PER_1000_FT;
+  }
+  return score;
 }
 
 export interface StationChoice {
   observation: StationObservation;
-  /** Usable stations closer than the chosen one that lost on elevation. */
+  /** Usable stations closer than the chosen one that lost on elevation or missing readings. */
   passedOverCloser: number;
 }
 
