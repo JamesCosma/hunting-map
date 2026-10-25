@@ -79,55 +79,205 @@
       </section>
 
       <main id="conditions" class="results" tabindex="-1">
-        <section id="location-summary" class="location" aria-labelledby="location-heading" hidden>
-          <div class="location__text">
-            <h2 id="location-heading" class="eyebrow">Selected spot</h2>
-            <p class="location__name" data-location-name></p>
-            <p class="location__region" data-location-region hidden></p>
-            <p class="location__meta">
-              <span class="zip-chip" data-location-zip hidden></span>
-              <span class="location__coords" data-location-coords></span>
-            </p>
-            <p class="visually-hidden" data-location-announce aria-live="polite"></p>
-          </div>
-          <div class="location__elevation">
-            <span class="eyebrow">Elevation</span>
-            <span class="location__elevation-value" data-location-elevation></span>
-          </div>
+        <div id="results-tabs" class="tabs" role="tablist" aria-label="Results">
           <button
-            class="icon-button location__refresh"
+            id="tab-conditions"
+            class="tabs__tab"
             type="button"
-            data-refresh
-            aria-label="Refresh conditions"
+            role="tab"
+            data-tab="conditions"
+            aria-selected="true"
+            aria-controls="panel-conditions"
           >
-            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
-              <path
-                d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
+            Conditions
           </button>
-        </section>
+          <button
+            id="tab-favorites"
+            class="tabs__tab"
+            type="button"
+            role="tab"
+            data-tab="favorites"
+            aria-selected="false"
+            aria-controls="panel-favorites"
+            tabindex="-1"
+          >
+            Favorites
+            <span class="tabs__count" data-favorites-count hidden></span>
+          </button>
+        </div>
 
-        <section id="station-card" class="card" aria-labelledby="station-heading">
-          <header class="card__header">
-            <h2 id="station-heading" class="card__title">Nearest station</h2>
-            <span class="badge badge--measured">Measured</span>
-          </header>
-          <div class="card__body" data-card-body aria-live="polite"></div>
-        </section>
+        <div
+          id="panel-conditions"
+          class="results__panel"
+          role="tabpanel"
+          aria-labelledby="tab-conditions"
+        >
+          <section id="location-summary" class="location" aria-labelledby="location-heading" hidden>
+            <div class="location__text">
+              <h2 id="location-heading" class="eyebrow">Selected spot</h2>
+              <p class="location__name" data-location-name></p>
+              <p class="location__region" data-location-region hidden></p>
+              <p class="location__meta">
+                <span class="zip-chip" data-location-zip hidden></span>
+                <span class="location__coords" data-location-coords></span>
+              </p>
+              <p class="visually-hidden" data-location-announce aria-live="polite"></p>
+            </div>
+            <div class="location__elevation">
+              <span class="eyebrow">Elevation</span>
+              <span class="location__elevation-value" data-location-elevation></span>
+            </div>
+            <button
+              class="icon-button location__refresh"
+              type="button"
+              data-refresh
+              aria-label="Refresh conditions"
+            >
+              <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+                <path
+                  d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+            <div class="location__actions">
+              <button
+                class="button button--secondary save-toggle"
+                type="button"
+                data-save-toggle
+                aria-expanded="false"
+                aria-controls="save-favorite"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="20"
+                  height="20"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path
+                    d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                <span data-save-label>Save spot</span>
+              </button>
+            </div>
+            <form id="save-favorite" class="save-favorite" data-save-form hidden novalidate>
+              <label class="save-favorite__label" for="favorite-name">Favorite name</label>
+              <input
+                id="favorite-name"
+                class="text-input"
+                type="text"
+                name="name"
+                maxlength="60"
+                autocomplete="off"
+                autocapitalize="words"
+                enterkeyhint="done"
+                aria-describedby="save-favorite-message"
+                data-save-name
+              />
+              <p
+                id="save-favorite-message"
+                class="save-favorite__message"
+                role="alert"
+                data-save-message
+                hidden
+              ></p>
+              <div class="save-favorite__actions">
+                <button class="button button--secondary" type="button" data-save-cancel>
+                  Cancel
+                </button>
+                <button class="button button--primary" type="submit" data-save-submit>Save</button>
+              </div>
+            </form>
+          </section>
 
-        <section id="model-card" class="card" aria-labelledby="model-heading">
-          <header class="card__header">
-            <h2 id="model-heading" class="card__title">This exact spot</h2>
-            <span class="badge badge--model">Model estimate</span>
-          </header>
-          <div class="card__body" data-card-body aria-live="polite"></div>
-        </section>
+          <section id="station-card" class="card" aria-labelledby="station-heading">
+            <header class="card__header">
+              <h2 id="station-heading" class="card__title">Nearest station</h2>
+              <span class="badge badge--measured">Measured</span>
+            </header>
+            <div class="card__body" data-card-body aria-live="polite"></div>
+          </section>
+
+          <section id="model-card" class="card" aria-labelledby="model-heading">
+            <header class="card__header">
+              <h2 id="model-heading" class="card__title">This exact spot</h2>
+              <span class="badge badge--model">Model estimate</span>
+            </header>
+            <div class="card__body" data-card-body aria-live="polite"></div>
+          </section>
+        </div>
+
+        <div
+          id="panel-favorites"
+          class="results__panel"
+          role="tabpanel"
+          aria-labelledby="tab-favorites"
+          hidden
+        >
+          <section id="favorites" class="favorites" aria-labelledby="favorites-heading">
+            <header class="favorites__header">
+              <div class="favorites__heading">
+                <h2 id="favorites-heading" class="favorites__title">Favorites</h2>
+                <p class="favorites__meta" data-favorites-meta></p>
+              </div>
+              <div class="favorites__tools">
+                <button
+                  class="icon-button"
+                  type="button"
+                  data-favorites-refresh
+                  aria-label="Refresh conditions for all favorites"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="20"
+                    height="20"
+                    aria-hidden="true"
+                    focusable="false"
+                  >
+                    <path
+                      d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </button>
+                <button
+                  class="button button--secondary"
+                  type="button"
+                  data-favorites-edit
+                  aria-pressed="false"
+                >
+                  Edit
+                </button>
+              </div>
+            </header>
+            <p class="favorites__source" data-favorites-source>
+              <span class="badge badge--model">Model estimate</span>
+              <span>Tap a spot for its nearest station reading.</span>
+            </p>
+            <div class="favorites__status" data-favorites-status aria-live="polite"></div>
+            <ul class="favorites__list" data-favorites-list aria-label="Saved spots"></ul>
+            <div class="favorites__empty" data-favorites-empty>
+              <p class="favorites__empty-title">No favorites yet</p>
+              <p class="favorites__empty-text">
+                Pick a spot on the map or search for one, then tap Save spot. Favorites are kept on
+                this device.
+              </p>
+            </div>
+          </section>
+        </div>
 
         <footer class="credits">
           <p>

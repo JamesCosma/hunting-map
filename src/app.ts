@@ -13,6 +13,14 @@ import { renderModelEstimate, renderStationObservation } from './ui/conditionsVi
 import { DROPPED_PIN_LABEL, LocationView } from './ui/locationView';
 import type { MapView } from './ui/mapView';
 
+/** The current spot and, once looked up, its place name and ZIP. */
+export interface Selection {
+  location: ChosenLocation;
+  place: PlaceSummary | null;
+}
+
+export type SelectionListener = (selection: Selection) => void;
+
 export interface AppViews {
   map: MapView;
   location: LocationView;
@@ -36,6 +44,7 @@ export class App {
   private placeTimer: ReturnType<typeof setTimeout> | undefined;
   private place: PlaceSummary | null = null;
   private views: AppViews | null = null;
+  private readonly listeners = new Set<SelectionListener>();
 
   attach(views: AppViews): void {
     this.views = views;
@@ -46,6 +55,18 @@ export class App {
     } else {
       this.select(saved, { recenter: true, persist: false });
     }
+  }
+
+  get selection(): Selection | null {
+    return this.current == null ? null : { location: this.current, place: this.place };
+  }
+
+  /** Notifies on every new selection and again when its place name arrives. */
+  onSelectionChange(listener: SelectionListener): () => void {
+    this.listeners.add(listener);
+    return () => {
+      this.listeners.delete(listener);
+    };
   }
 
   /** Called when the user taps the map. */
@@ -64,6 +85,7 @@ export class App {
     if (options.persist !== false) writeJson(STORAGE_KEYS.lastLocation, location);
     this.load();
     this.loadPlace();
+    this.notify();
   }
 
   refresh(): void {
@@ -108,6 +130,13 @@ export class App {
   private showPlace(place: PlaceSummary): void {
     this.place = place;
     this.views?.location.setPlace({ kind: 'ready', place });
+    this.notify();
+  }
+
+  private notify(): void {
+    const selection = this.selection;
+    if (selection == null) return;
+    for (const listener of this.listeners) listener(selection);
   }
 
   private load(): void {

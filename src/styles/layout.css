@@ -48,6 +48,13 @@
   outline: none;
 }
 
+/* Tab panels lay out their cards exactly like the results column itself. */
+.results__panel {
+  display: flex;
+  flex-direction: column;
+  gap: inherit;
+}
+
 @media (min-width: 900px) {
   .app {
     grid-template-areas:

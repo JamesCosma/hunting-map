@@ -88,3 +88,29 @@ export function createCompass(deg: number | null, speedMph: number | null): SVGE
     children,
   );
 }
+
+/**
+ * Small decorative arrow for list rows, pointing downwind like the compass.
+ * Hidden from screen readers because the row's text already states the direction.
+ */
+export function createWindArrow(deg: number | null, speedMph: number | null): SVGElement {
+  const hasDirection = deg != null && !isCalm(speedMph);
+  return svg(
+    'svg',
+    {
+      viewBox: '0 0 16 16',
+      width: 16,
+      height: 16,
+      class: 'wind-arrow',
+      'aria-hidden': 'true',
+      focusable: 'false',
+    },
+    hasDirection
+      ? [
+          svg('g', { transform: `rotate(${normalizeDegrees(deg + 180)} 8 8)` }, [
+            svg('path', { d: 'M8 1.5 L12.5 9 L8.9 8.2 L8.9 14.5 L7.1 14.5 L7.1 8.2 L3.5 9 Z' }),
+          ]),
+        ]
+      : [svg('circle', { cx: 8, cy: 8, r: 3 })],
+  );
+}

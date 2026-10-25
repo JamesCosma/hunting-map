@@ -3,12 +3,18 @@ import './styles/base.css';
 import './styles/layout.css';
 import './styles/components.css';
 import { App } from './app';
+import { STORAGE_KEYS } from './config';
+import { FavoritesController, type ResultsTab } from './favoritesController';
 import { requireElement } from './lib/dom';
+import { FavoritesStore } from './lib/favoritesStore';
 import { CardView } from './ui/cardView';
 import { refreshAgeLabels } from './ui/conditionsView';
+import { FavoritesView } from './ui/favoritesView';
 import { LocationView } from './ui/locationView';
 import { MapView } from './ui/mapView';
+import { SaveFavoriteView } from './ui/saveFavoriteView';
 import { SearchBox } from './ui/searchBox';
+import { Tabs } from './ui/tabs';
 
 function bootstrap(): void {
   const app = new App();
@@ -28,13 +34,52 @@ function bootstrap(): void {
     },
   });
 
+  const favorites = new FavoritesController(app, new FavoritesStore());
+  const locationSummary = requireElement<HTMLElement>('#location-summary');
+  const tabs = new Tabs<ResultsTab>(requireElement<HTMLElement>('#results-tabs'), (tab) => {
+    favorites.setVisible(tab === 'favorites');
+  });
+
+  // Favorites attach first so they hear the selection restored by app.attach().
+  favorites.attach({
+    tabs,
+    list: new FavoritesView(requireElement<HTMLElement>('#favorites'), {
+      onOpen: (favorite) => {
+        favorites.open(favorite);
+      },
+      onRename: (id, name) => favorites.rename(id, name),
+      onDelete: (id) => {
+        favorites.remove(id);
+      },
+      onUndo: () => {
+        favorites.undo();
+      },
+      onRefresh: () => {
+        favorites.refresh();
+      },
+    }),
+    save: new SaveFavoriteView(locationSummary, {
+      onSave: (name) => favorites.saveCurrent(name),
+      onShowSaved: () => {
+        favorites.showCurrent();
+      },
+    }),
+    count: requireElement<HTMLElement>('[data-favorites-count]'),
+    results: requireElement<HTMLElement>('#conditions'),
+  });
+
   app.attach({
     map,
-    location: new LocationView(requireElement<HTMLElement>('#location-summary'), () => {
+    location: new LocationView(locationSummary, () => {
       app.refresh();
     }),
     stationCard: new CardView(requireElement<HTMLElement>('#station-card')),
     modelCard: new CardView(requireElement<HTMLElement>('#model-card')),
+  });
+
+  // Keep favorites in sync when they are edited in another tab or window.
+  window.addEventListener('storage', (event) => {
+    if (event.key === STORAGE_KEYS.favorites || event.key === null) favorites.reloadFromStorage();
   });
 
   // Keep "x min ago" labels honest while the page stays open.
