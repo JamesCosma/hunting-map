@@ -5,3 +5,7 @@ coverage/
 .DS_Store
 .vite/
 test-results/
+
+# Local secrets such as VITE_SYNOPTIC_TOKEN
+.env.local
+.env.*.local

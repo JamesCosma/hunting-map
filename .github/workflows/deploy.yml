@@ -41,6 +41,9 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          # Optional public token for Synoptic weather stations. Without it the app uses NWS only.
+          VITE_SYNOPTIC_TOKEN: ${{ secrets.SYNOPTIC_TOKEN }}
 
       - name: Configure Pages
         if: github.event_name != 'pull_request'

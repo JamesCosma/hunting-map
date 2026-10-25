@@ -19,6 +19,7 @@ import { RequestError, fetchJson, type FetchJsonOptions } from '../lib/http';
 import { asArray, asNumber, asRecord, asString } from '../lib/json';
 import { wmoToImperial } from '../lib/units';
 import type { Conditions, LatLon, StationObservation } from '../types';
+import { nwsStationKind } from './synopticNetworks';
 
 /** NWS asks clients to request GeoJSON explicitly. Accept is CORS-safelisted, so no preflight. */
 const NWS_HEADERS = { Accept: 'application/geo+json' };
@@ -180,11 +181,19 @@ export async function getNearestObservation(
           observation: {
             stationId: station.id,
             stationName: station.name,
+            source: 'nws',
+            kind: nwsStationKind(station.id),
+            network: null,
+            lat: station.lat,
+            lon: station.lon,
             distanceMi: station.distanceMi,
             elevationFt: parsed.elevationFt,
+            elevationCheck: null,
             observedAt: parsed.observedAt,
             conditions: parsed.conditions,
+            qcNotes: [],
             skippedCloser: start + index,
+            passedOverCloser: 0,
           },
         };
       }
