@@ -21,6 +21,15 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/*
+ * Theme changes ease rather than snap. Only the root element transitions, so
+ * this costs one animated property, not one per element. The reduced-motion
+ * block below reduces it to nothing for users who ask for that.
+ */
+html {
+  transition: background-color var(--duration-medium) ease;
+}
+
 h1,
 h2,
 p {

@@ -19,6 +19,14 @@ export const REQUEST_RETRIES = 1;
 /** A station reading older than this is treated as stale and skipped. */
 export const STATION_MAX_AGE_MINUTES = 120;
 
+/**
+ * Distance bands used to tell the user how much the nearest station's reading
+ * is worth for their exact spot. Terrain, not mileage, is the real driver, but
+ * distance is the signal we actually have.
+ */
+export const STATION_NEAR_MI = 15;
+export const STATION_FAR_MI = 40;
+
 /** How many nearby stations are queried per batch, and the most we will ever try. */
 export const STATION_BATCH_SIZE = 3;
 export const STATION_MAX_CANDIDATES = 9;
@@ -35,4 +43,5 @@ export const PLACE_ZOOM = 11;
 export const STORAGE_KEYS = {
   lastLocation: 'hunting-map:last-location',
   baseLayer: 'hunting-map:base-layer',
+  theme: 'hunting-map:theme',
 } as const;

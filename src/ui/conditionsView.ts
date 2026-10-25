@@ -1,4 +1,5 @@
-import { h } from '../lib/dom';
+import { h, svg } from '../lib/dom';
+import { compareWithStation, proximityCaveat, stationProximity, type Delta } from '../lib/compare';
 import {
   formatAge,
   formatClockTime,
@@ -32,14 +33,19 @@ function unavailableAttrs(value: number | null): Record<string, string> {
   return value == null ? { 'data-unavailable': 'true' } : {};
 }
 
-/** Temperature, humidity and wind, shared by both data sources so they compare at a glance. */
+/**
+ * Temperature leads at display size because it is the one number people check
+ * first; humidity sits beside it, and wind gets a full-width row of its own so
+ * the compass has room to read. Both sources use this same shape, which is
+ * what lets the two cards be compared by glancing down the column.
+ */
 export function renderMetrics(conditions: Conditions): HTMLElement {
   const gust = gustText(conditions);
   return h('dl', { className: 'metrics' }, [
-    h('div', { className: 'metric metric--temperature' }, [
+    h('div', { className: 'metric metric--hero' }, [
       h('dt', { className: 'metric__label', text: 'Temperature' }),
       h('dd', {
-        className: 'metric__value',
+        className: 'metric__value metric__value--hero',
         text: formatTemperature(conditions.temperatureF),
         attrs: unavailableAttrs(conditions.temperatureF),
       }),
@@ -78,24 +84,58 @@ function ageLabel(date: Date): HTMLElement {
   });
 }
 
+/** Small map-pin glyph that gives the distance chip something to anchor on. */
+function pinGlyph(): SVGElement {
+  return svg(
+    'svg',
+    { viewBox: '0 0 16 16', width: 13, height: 13, class: 'distance__icon', 'aria-hidden': 'true' },
+    [
+      svg('path', {
+        d: 'M8 1.2a4.6 4.6 0 0 0-4.6 4.6C3.4 9.3 8 14.8 8 14.8s4.6-5.5 4.6-9A4.6 4.6 0 0 0 8 1.2z',
+        fill: 'none',
+        stroke: 'currentColor',
+        'stroke-width': 1.6,
+        'stroke-linejoin': 'round',
+      }),
+      svg('circle', { cx: 8, cy: 5.8, r: 1.7, fill: 'currentColor' }),
+    ],
+  );
+}
+
+/**
+ * How far away the station is, which is the single most important caveat on
+ * the measured reading and so is given real visual weight rather than being
+ * buried in a line of grey detail text.
+ */
+function distanceChip(distanceMi: number): HTMLElement {
+  return h(
+    'p',
+    {
+      className: 'distance',
+      attrs: { 'data-proximity': stationProximity(distanceMi) },
+    },
+    [pinGlyph(), h('span', { text: `${formatDistance(distanceMi)} from your spot` })],
+  );
+}
+
 export function renderStationObservation(observation: StationObservation): HTMLElement[] {
-  const details = [`${formatDistance(observation.distanceMi)} away`];
-  if (observation.elevationFt != null) {
-    details.push(`station at ${formatElevation(observation.elevationFt)}`);
-  }
+  const caveat = proximityCaveat(observation.distanceMi);
   const skipped = observation.skippedCloser;
+  const timing: (string | HTMLElement)[] = ['Reported ', ageLabel(observation.observedAt)];
+  timing.push(` at ${formatClockTime(observation.observedAt)}`);
+  if (observation.elevationFt != null) {
+    timing.push(` · station at ${formatElevation(observation.elevationFt)}`);
+  }
+
   return [
     h('div', { className: 'card__meta' }, [
       h('p', { className: 'card__source' }, [
         h('span', { className: 'card__source-name', text: observation.stationName }),
         h('span', { className: 'card__source-id', text: observation.stationId }),
       ]),
-      h('p', { className: 'card__detail', text: details.join(', ') }),
-      h('p', { className: 'card__detail' }, [
-        'Reported ',
-        ageLabel(observation.observedAt),
-        ` at ${formatClockTime(observation.observedAt)}`,
-      ]),
+      distanceChip(observation.distanceMi),
+      h('p', { className: 'card__detail' }, timing),
+      caveat == null ? null : h('p', { className: 'card__caveat', text: caveat }),
       skipped > 0
         ? h('p', {
             className: 'card__hint',
@@ -107,16 +147,54 @@ export function renderStationObservation(observation: StationObservation): HTMLE
   ];
 }
 
-export function renderModelEstimate(estimate: ModelEstimate): HTMLElement[] {
+/**
+ * The measured-versus-model differences. This is the comparison the app exists
+ * to make, so it is stated outright instead of leaving the user to subtract two
+ * cards in their head.
+ */
+function renderComparison(stationName: string, deltas: Delta[]): HTMLElement | null {
+  if (deltas.length === 0) return null;
+  return h('div', { className: 'compare' }, [
+    h('p', { className: 'compare__title', text: `Your spot vs ${stationName}` }),
+    h(
+      'ul',
+      { className: 'compare__list' },
+      deltas.map((entry) =>
+        h('li', { className: 'compare__item', attrs: { 'data-tone': entry.tone } }, [
+          h('span', { className: 'compare__text', text: entry.text }),
+        ]),
+      ),
+    ),
+  ]);
+}
+
+export function renderModelEstimate(
+  estimate: ModelEstimate,
+  station: StationObservation | null = null,
+): HTMLElement[] {
+  const comparison =
+    station == null
+      ? null
+      : renderComparison(
+          station.stationName,
+          compareWithStation({
+            model: estimate.conditions,
+            station: station.conditions,
+            modelElevationFt: estimate.elevationFt,
+            stationElevationFt: station.elevationFt,
+          }),
+        );
+
   return [
     h('div', { className: 'card__meta' }, [
       h('p', { className: 'card__detail' }, [
-        `Open-Meteo, valid ${formatClockTime(estimate.validAt)} (`,
+        `Open-Meteo model, valid ${formatClockTime(estimate.validAt)} (`,
         ageLabel(estimate.validAt),
         ')',
       ]),
     ]),
     renderMetrics(estimate.conditions),
+    ...(comparison == null ? [] : [comparison]),
   ];
 }
 

@@ -1,3 +1,9 @@
+/*
+ * Leaflet's stylesheet comes first so the app's own rules win where the two
+ * overlap. Imported from mapView.ts it would land last in the bundle, and
+ * Leaflet's white control backgrounds would override the dark theme.
+ */
+import 'leaflet/dist/leaflet.css';
 import './styles/tokens.css';
 import './styles/base.css';
 import './styles/layout.css';
@@ -9,9 +15,12 @@ import { refreshAgeLabels } from './ui/conditionsView';
 import { LocationView } from './ui/locationView';
 import { MapView } from './ui/mapView';
 import { SearchBox } from './ui/searchBox';
+import { ThemeToggle } from './ui/themeToggle';
 
 function bootstrap(): void {
   const app = new App();
+
+  new ThemeToggle(requireElement<HTMLElement>('#theme-toggle'));
 
   const map = new MapView(requireElement<HTMLElement>('#map'), {
     onPick: (point) => {

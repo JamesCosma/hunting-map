@@ -22,10 +22,10 @@ export class CardView {
     this.setState('loading');
     const line = (width: string): HTMLElement =>
       h('span', { className: 'skeleton skeleton--line', attrs: { style: `width:${width}` } });
-    const metric = (modifier: string): HTMLElement =>
+    const metric = (modifier: string, valueClass: string): HTMLElement =>
       h('div', { className: `metric metric--skeleton ${modifier}` }, [
         line('45%'),
-        h('span', { className: 'skeleton skeleton--value' }),
+        h('span', { className: `skeleton ${valueClass}` }),
       ]);
     this.body.replaceChildren(
       h('div', { className: 'card__meta', attrs: { 'aria-hidden': 'true' } }, [
@@ -33,8 +33,8 @@ export class CardView {
         line('50%'),
       ]),
       h('div', { className: 'metrics', attrs: { 'aria-hidden': 'true' } }, [
-        metric('metric--temperature'),
-        metric('metric--humidity'),
+        metric('metric--hero', 'skeleton--value-hero'),
+        metric('metric--humidity', 'skeleton--value'),
         h('div', { className: 'metric metric--wind metric--skeleton' }, [
           h('span', { className: 'skeleton skeleton--circle' }),
           h('div', { className: 'metric__stack' }, [line('60%'), line('80%')]),

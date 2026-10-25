@@ -9,14 +9,19 @@ Pick a spot by searching for a place name or ZIP code, or by tapping the map. Hu
 - **Nearest station (measured):** the latest real observation from the closest National Weather Service station that has reported recently, with the station name, its distance from your spot, and how old the reading is.
 - **This exact spot (model estimate):** an Open-Meteo weather model estimate for the exact coordinates you chose. This also covers places outside NWS coverage.
 
+The model card then states the difference between the two outright ("4°F cooler, 7,595 ft higher, 8 mph more wind"), because that gap is the thing worth knowing and it is easy to misread by eyeballing two cards.
+
 ## Features
 
 - Search by town, peak, range, or area name (for example `Tonopah, NV` or `Ruby Mountains`) or by 5 digit US ZIP code (`89031`).
 - Tap or click the map to drop a pin. Keyboard users can pan with the arrow keys and press Enter to drop a pin at the map center.
 - Temperature (°F), relative humidity, wind speed and gusts (mph), and wind direction shown both as a compass arrow and as text such as `From SW (225°)`.
 - Elevation of the chosen spot in feet, plus the elevation of the reporting station.
+- A plain-language comparison of your exact spot against the station reading, so the two sources are read together rather than separately.
+- The station's distance is called out in color, with a warning once it is far enough away (over 40 miles) that the reading says little about your spot.
+- Light, dark, and automatic themes. Dark mode is the point of the feature: this app gets opened before dawn and at last light, and street and topo tiles are dimmed to match while satellite imagery is left alone.
 - Automatic fallback past stale or empty stations to the next nearest one, with a note when closer stations were skipped.
-- Streets, Topo (OpenTopoMap), and Satellite (Esri World Imagery) base maps. Your choice is remembered.
+- Streets, Topo (OpenTopoMap), and Satellite (Esri World Imagery) base maps, switched from a segmented control that matches the rest of the UI. Your choice is remembered.
 - Remembers your last spot, so reopening the app from the home screen shows it right away.
 - Works in Safari on iPhone, including Add to Home Screen (web manifest, Apple touch icon, standalone mode, safe-area insets), and in desktop Chrome and Edge.
 - Loading skeletons, clear "not reported" labels for missing values, and friendly error messages with a retry button.
@@ -43,7 +48,7 @@ All of these were verified to return `Access-Control-Allow-Origin: *` and to wor
 
 ## Architecture
 
-Plain TypeScript with no UI framework. The app is small, and direct DOM rendering keeps the bundle light (about 54 kB gzipped including Leaflet) for slow connections.
+Plain TypeScript with no UI framework. The app is small, and direct DOM rendering keeps the bundle light (about 55 kB of JavaScript and 11 kB of CSS, gzipped, including Leaflet) for slow connections.
 
 ```
 src/
@@ -57,6 +62,7 @@ src/
     units.ts            Unit conversions, including NWS WMO unit codes
     geo.ts              Haversine distance, 16 point compass, coordinate helpers
     format.ts           Display formatting (temperatures, ages, wind text)
+    compare.ts          Station proximity bands and measured-versus-model deltas
     dom.ts              Tiny element builder (textContent only, never innerHTML)
     storage.ts          localStorage wrapper that never throws
     usStates.ts         State names and abbreviations for "Town, ST" search
@@ -66,6 +72,7 @@ src/
     geocoding.ts        Query classification, ZIP, name, and fallback search
   ui/
     mapView.ts          Leaflet map, base layers, pin, click and keyboard picking
+    themeToggle.ts      Light / dark / auto theme control and persistence
     searchBox.ts        Search form and keyboard navigable results
     cardView.ts         Card states: placeholder, loading, content, notice, error
     conditionsView.ts   Metric and wind rendering shared by both sources
@@ -84,7 +91,10 @@ Design choices worth knowing:
 - **Every API payload is treated as `unknown`** and narrowed field by field, so an upstream schema change shows "Not reported" instead of crashing.
 - **Stale responses never win.** Each new selection aborts the previous one's requests through an `AbortController`.
 - **Weak signal handling.** 15 second timeouts, one retry with backoff for transient failures (network errors, 429, 5xx), and no preflight requests (only CORS safelisted headers are sent).
-- **Accessibility.** Labeled controls, a skip link, visible focus rings, 44 px tap targets, live regions for loading and errors, an accessible name on the compass, keyboard pin dropping, reduced motion support, and text colors that meet WCAG AA contrast.
+- **Accessibility.** Labeled controls, a skip link, visible focus rings, 44 px tap targets on touch devices, live regions for loading and errors, an accessible name on the compass, keyboard pin dropping, reduced motion support, and text colors that meet WCAG AA contrast in both themes (the ratio for each pairing is recorded beside its token).
+- **One source of truth per color.** `tokens.css` defines each color once with `light-dark()`, so there is no dark block to drift out of sync. Every color is also declared once in plain form first, so a browser without `light-dark()` (iOS below 17.5) falls back to the light theme rather than losing its colors.
+- **The theme is applied before first paint** by a small inline script in `index.html`, so opening the app in the dark does not flash a white screen.
+- **Segmented controls are built from real radio inputs.** The theme toggle and the base-map switcher get their grouping, arrow-key navigation and screen reader semantics from the platform; the CSS only restyles the label.
 
 ## Local development
 

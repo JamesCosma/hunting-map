@@ -9,7 +9,23 @@
       content="Pick any spot in the US to see the nearest weather station reading, a model estimate for that exact spot, wind direction, and elevation."
     />
     <meta name="theme-color" content="#1f3d30" />
-    <meta name="color-scheme" content="light" />
+    <meta name="color-scheme" content="light dark" />
+
+    <!--
+      Applies the saved theme before first paint. Without this the page renders
+      light for a frame before the module loads, which is a bright flash in the
+      dark and the exact moment this app is most likely to be opened.
+    -->
+    <script>
+      try {
+        var saved = JSON.parse(localStorage.getItem('hunting-map:theme'));
+        if (saved === 'light' || saved === 'dark') {
+          document.documentElement.dataset.theme = saved;
+        }
+      } catch (error) {
+        /* Private mode or blocked storage: fall through to the OS setting. */
+      }
+    </script>
 
     <!-- iOS Add to Home Screen -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -28,12 +44,43 @@
     <a class="skip-link" href="#conditions">Skip to conditions</a>
     <div class="app">
       <header class="app-top">
-        <div class="brand">
-          <img class="brand__mark" src="/icons/favicon.svg" alt="" width="36" height="36" />
-          <div>
-            <h1 class="brand__name">Hunting Map</h1>
-            <p class="brand__tagline">Conditions and elevation for any spot</p>
+        <div class="app-top__bar">
+          <div class="brand">
+            <img class="brand__mark" src="/icons/favicon.svg" alt="" width="36" height="36" />
+            <div class="brand__text">
+              <h1 class="brand__name">Hunting Map</h1>
+              <p class="brand__tagline">Conditions and elevation for any spot</p>
+            </div>
           </div>
+
+          <fieldset id="theme-toggle" class="theme-toggle">
+            <legend class="visually-hidden">Color theme</legend>
+            <input
+              class="theme-toggle__input"
+              type="radio"
+              name="theme"
+              id="theme-auto"
+              value="auto"
+              checked
+            />
+            <label class="theme-toggle__option" for="theme-auto">Auto</label>
+            <input
+              class="theme-toggle__input"
+              type="radio"
+              name="theme"
+              id="theme-light"
+              value="light"
+            />
+            <label class="theme-toggle__option" for="theme-light">Light</label>
+            <input
+              class="theme-toggle__input"
+              type="radio"
+              name="theme"
+              id="theme-dark"
+              value="dark"
+            />
+            <label class="theme-toggle__option" for="theme-dark">Dark</label>
+          </fieldset>
         </div>
 
         <form id="search-form" class="search" role="search" novalidate>
@@ -109,7 +156,7 @@
           </button>
         </section>
 
-        <section id="station-card" class="card" aria-labelledby="station-heading">
+        <section id="station-card" class="card card--measured" aria-labelledby="station-heading">
           <header class="card__header">
             <h2 id="station-heading" class="card__title">Nearest station</h2>
             <span class="badge badge--measured">Measured</span>
@@ -117,7 +164,7 @@
           <div class="card__body" data-card-body aria-live="polite"></div>
         </section>
 
-        <section id="model-card" class="card" aria-labelledby="model-heading">
+        <section id="model-card" class="card card--model" aria-labelledby="model-heading">
           <header class="card__header">
             <h2 id="model-heading" class="card__title">This exact spot</h2>
             <span class="badge badge--model">Model estimate</span>

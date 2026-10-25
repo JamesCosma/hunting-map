@@ -6,7 +6,7 @@ import { asNumber, asRecord, asString } from './lib/json';
 import { readJson, writeJson } from './lib/storage';
 import { getModelEstimate } from './services/openMeteo';
 import { getNearestObservation, type NwsResult } from './services/nws';
-import type { ChosenLocation, LatLon, ModelEstimate } from './types';
+import type { ChosenLocation, LatLon, ModelEstimate, StationObservation } from './types';
 import { CardView } from './ui/cardView';
 import { renderModelEstimate, renderStationObservation } from './ui/conditionsView';
 import { LocationView } from './ui/locationView';
@@ -28,6 +28,12 @@ export class App {
   private current: ChosenLocation | null = null;
   private controller: AbortController | null = null;
   private views: AppViews | null = null;
+  /**
+   * Results of the load in flight. The two sources resolve independently, so
+   * whichever lands second completes the model card's comparison strip.
+   */
+  private station: StationObservation | null = null;
+  private model: ModelEstimate | null = null;
 
   attach(views: AppViews): void {
     this.views = views;
@@ -71,6 +77,8 @@ export class App {
     this.controller = controller;
     const { signal } = controller;
 
+    this.station = null;
+    this.model = null;
     views.location.setRefreshing(true);
     views.location.setElevation({ kind: 'loading' });
     views.stationCard.showLoading();
@@ -114,7 +122,10 @@ export class App {
     if (card == null) return;
     switch (result.status) {
       case 'ok':
+        this.station = result.observation;
         card.showContent(...renderStationObservation(result.observation));
+        // The model card may already be on screen without its comparison.
+        if (this.model != null) this.renderModel(this.model);
         break;
       case 'outside-coverage':
         card.showNotice(
@@ -134,8 +145,9 @@ export class App {
   private renderModel(estimate: ModelEstimate): void {
     const views = this.views;
     if (views == null) return;
+    this.model = estimate;
     views.location.setElevation({ kind: 'ready', feet: estimate.elevationFt });
-    views.modelCard.showContent(...renderModelEstimate(estimate));
+    views.modelCard.showContent(...renderModelEstimate(estimate, this.station));
   }
 }
 

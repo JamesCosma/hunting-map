@@ -1,5 +1,4 @@
 import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 import { DEFAULT_VIEW, STORAGE_KEYS } from '../config';
 import { wrapLongitude } from '../lib/geo';
 import { readJson, writeJson } from '../lib/storage';
@@ -106,16 +105,65 @@ export class MapView {
     const saved = readJson(STORAGE_KEYS.baseLayer);
     const initialName = typeof saved === 'string' && saved in layers ? saved : 'Streets';
     layers[initialName]?.addTo(this.map);
+    this.setActiveLayerName(initialName);
+    this.addLayerSwitcher(layers, initialName);
+  }
 
-    L.control
-      .layers(layers, undefined, {
-        position: 'topright',
-        collapsed: window.matchMedia('(max-width: 720px)').matches,
-      })
-      .addTo(this.map);
-    this.map.on('baselayerchange', (event: L.LayersControlEvent) => {
-      writeJson(STORAGE_KEYS.baseLayer, event.name);
-    });
+  /** Swaps the visible base layer and records the choice. */
+  private selectBaseLayer(layers: Record<string, L.TileLayer>, name: string): void {
+    for (const [layerName, layer] of Object.entries(layers)) {
+      if (layerName === name) layer.addTo(this.map);
+      else this.map.removeLayer(layer);
+    }
+    this.setActiveLayerName(name);
+    writeJson(STORAGE_KEYS.baseLayer, name);
+  }
+
+  /**
+   * A segmented base-layer switcher, in place of Leaflet's default radio list.
+   * Real radio inputs keep platform grouping and arrow-key navigation; the
+   * control only supplies the styling and the layer swap.
+   */
+  private addLayerSwitcher(layers: Record<string, L.TileLayer>, initialName: string): void {
+    const control = new L.Control({ position: 'topright' });
+    control.onAdd = (): HTMLElement => {
+      const container = L.DomUtil.create('div', 'layer-switcher');
+      container.setAttribute('role', 'group');
+      container.setAttribute('aria-label', 'Base map');
+
+      const group = `base-layer-${Math.random().toString(36).slice(2, 8)}`;
+      for (const name of Object.keys(layers)) {
+        const id = `${group}-${name.toLowerCase()}`;
+        const input = L.DomUtil.create('input', 'layer-switcher__input', container);
+        input.type = 'radio';
+        input.name = group;
+        input.id = id;
+        input.value = name;
+        input.checked = name === initialName;
+
+        const label = L.DomUtil.create('label', 'layer-switcher__option', container);
+        label.htmlFor = id;
+        label.textContent = name;
+
+        L.DomEvent.on(input, 'change', () => {
+          if (input.checked) this.selectBaseLayer(layers, name);
+        });
+      }
+
+      // Without this, dragging or clicking the control pans the map underneath.
+      L.DomEvent.disableClickPropagation(container);
+      L.DomEvent.disableScrollPropagation(container);
+      return container;
+    };
+    control.addTo(this.map);
+  }
+
+  /**
+   * Records the active layer on the container so the stylesheet can dim bright
+   * street and topo tiles in the dark theme while leaving satellite alone.
+   */
+  private setActiveLayerName(name: string): void {
+    this.map.getContainer().dataset.layer = name.toLowerCase();
   }
 
   /** Moves the pin. `recenter` pans the map, used for search results but not for taps. */
@@ -133,6 +181,8 @@ export class MapView {
     if (options.recenter) {
       this.map.setView(latLng, options.zoom ?? Math.max(this.map.getZoom(), 10));
     }
+    // The "tap to drop a pin" hint has served its purpose once a pin exists.
+    this.map.getContainer().closest('.map-pane')?.setAttribute('data-has-pin', 'true');
   }
 
   /** Leaflet needs a nudge after its container changes size (orientation change, layout shift). */

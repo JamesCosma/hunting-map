@@ -1,7 +1,22 @@
 /*
- * Design tokens. Spacing follows a 4 px base scale; type follows a modular
- * scale. Colors are chosen to meet WCAG AA contrast on their intended
- * backgrounds (noted beside each pairing).
+ * Design tokens.
+ *
+ * Spacing follows a 4 px base scale; type follows a modular scale. Every
+ * color is a semantic token, so a component stylesheet never needs to know
+ * which theme is active.
+ *
+ * Theming uses `light-dark()`, which resolves against the `color-scheme`
+ * property. That keeps one source of truth per color instead of a light
+ * block and a duplicated dark block that drift apart:
+ *
+ *   :root                       color-scheme: light dark  -> follows the OS
+ *   :root[data-theme='light']   color-scheme: light       -> forced light
+ *   :root[data-theme='dark']    color-scheme: dark        -> forced dark
+ *
+ * Each color is declared twice on purpose. Browsers without `light-dark()`
+ * (iOS below 17.5, Chrome below 123) drop the second declaration as invalid
+ * and keep the plain light value, so the app degrades to the light theme
+ * rather than losing its colors.
  */
 :root {
   /* Spacing */
@@ -25,6 +40,7 @@
   --text-xl: 1.5rem; /* 24px */
   --text-2xl: 2rem; /* 32px */
   --text-3xl: 2.5rem; /* 40px */
+  --text-4xl: 3.25rem; /* 52px, the hero temperature */
   --leading-tight: 1.15;
   --leading-normal: 1.45;
   --weight-regular: 400;
@@ -32,50 +48,166 @@
   --weight-semibold: 600;
   --weight-bold: 700;
 
-  /* Color */
-  --color-bg: #f3f2ec;
-  --color-surface: #ffffff;
-  --color-surface-sunken: #f7f6f2;
-  --color-border: #dddbd1;
-  --color-border-strong: #b9b6a8;
-  --color-text: #1b2420; /* 15.9:1 on surface */
-  --color-text-muted: #55605a; /* 6.6:1 on surface */
-  --color-primary: #1f3d30; /* 11.9:1 with white text */
-  --color-primary-hover: #2b5241;
-  --color-on-primary: #ffffff;
-  --color-on-primary-muted: #c9d8cf; /* 8.0:1 on primary */
-  --color-accent: #d9540f; /* blaze orange, graphics only */
-  --color-accent-text: #b54205; /* 5.6:1 on surface */
-  --color-measured-bg: #e2efe6;
-  --color-measured-text: #1d5034; /* 7.9:1 on its bg */
-  --color-model-bg: #e4ebf5;
-  --color-model-text: #23436a; /* 8.4:1 on its bg */
-  --color-danger: #a8261b; /* 7.1:1 on surface */
-  --color-danger-bg: #fcebe8;
-  --color-notice-bg: #fbf4e3;
-  --color-notice-border: #e8d4a2;
-  --color-focus: #1a5fd0;
-  --color-skeleton: #e6e3d8;
-  --color-skeleton-shine: #f6f5f0;
-
   /* Shape and depth */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
+  --radius-xl: 20px;
   --radius-pill: 999px;
-  --shadow-sm: 0 1px 2px rgb(27 36 32 / 6%);
-  --shadow-md: 0 1px 2px rgb(27 36 32 / 6%), 0 4px 12px rgb(27 36 32 / 8%);
-  --shadow-lg: 0 8px 28px rgb(27 36 32 / 18%);
 
   /* Interaction */
   --tap-target: 44px;
-  --focus-ring: 0 0 0 3px var(--color-focus);
   --duration-fast: 120ms;
+  --duration-medium: 220ms;
 
   /* Layout */
-  --panel-width: 440px;
+  --panel-width: 460px;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
+}
+
+/*
+ * Colors. The comment beside each pairing is the contrast ratio on its
+ * intended background, light theme first, dark theme second. All meet
+ * WCAG AA for their text size.
+ */
+:root {
+  color-scheme: light dark;
+
+  /* Page and panels */
+  --color-bg: #f3f2ec;
+  --color-bg: light-dark(#f3f2ec, #0f1310);
+  --color-surface: #ffffff;
+  --color-surface: light-dark(#ffffff, #191e1a);
+  --color-surface-sunken: #f6f5f0;
+  --color-surface-sunken: light-dark(#f6f5f0, #141814);
+  --color-surface-raised: #ffffff;
+  --color-surface-raised: light-dark(#ffffff, #1f2520);
+  --color-border: #dddbd1;
+  --color-border: light-dark(#dddbd1, #2c332c);
+  --color-border-strong: #b9b6a8;
+  --color-border-strong: light-dark(#b9b6a8, #475049);
+
+  /* Text */
+  --color-text: #1b2420; /* 15.9:1 / 14.4:1 */
+  --color-text: light-dark(#1b2420, #eaeee9);
+  --color-text-muted: #55605a; /* 6.5:1 / 7.4:1 */
+  --color-text-muted: light-dark(#55605a, #a3aea4);
+  --color-text-subtle: #6c766f; /* 4.7:1 / 5.5:1 */
+  --color-text-subtle: light-dark(#6c766f, #8b968c);
+
+  /* Header: a brand surface that stays dark in both themes */
+  --color-header-from: #255845;
+  --color-header-from: light-dark(#255845, #1d2a23);
+  --color-header-to: #1b3328;
+  --color-header-to: light-dark(#1b3328, #161b17);
+  --color-header-solid: #1f3d30;
+  --color-header-solid: light-dark(#1f3d30, #161b17);
+  --color-header-text: #ffffff;
+  --color-header-text: light-dark(#ffffff, #eaeee9);
+  --color-header-muted: #c9d8cf; /* 8.0:1 / 7.7:1 on the header */
+  --color-header-muted: light-dark(#c9d8cf, #9fb0a4);
+  --color-header-field: #ffffff;
+  --color-header-field: light-dark(#ffffff, #232a24);
+  --color-header-border: rgb(255 255 255 / 14%);
+  --color-header-border: light-dark(rgb(255 255 255 / 14%), rgb(255 255 255 / 10%));
+  --color-header-bg: linear-gradient(
+    165deg,
+    var(--color-header-from) 0%,
+    var(--color-header-to) 72%
+  );
+
+  /* Blaze orange */
+  --color-accent: #d9540f; /* graphics only */
+  --color-accent: light-dark(#d9540f, #f4762f);
+  --color-accent-text: #b54205; /* 5.6:1 / 8.1:1 */
+  --color-accent-text: light-dark(#b54205, #ff9b5e);
+  --color-accent-strong: #9c3904;
+  --color-accent-strong: light-dark(#9c3904, #ff8440);
+  --color-on-accent: #ffffff;
+  --color-on-accent: light-dark(#ffffff, #1b1004);
+
+  /* Source badges */
+  --color-measured-bg: #e2efe6;
+  --color-measured-bg: light-dark(#e2efe6, #16301f);
+  --color-measured-text: #1d5034; /* 7.9:1 / 8.5:1 on its bg */
+  --color-measured-text: light-dark(#1d5034, #8ad9a5);
+  --color-model-bg: #e4ebf5;
+  --color-model-bg: light-dark(#e4ebf5, #182740);
+  --color-model-text: #23436a; /* 8.4:1 / 8.4:1 on its bg */
+  --color-model-text: light-dark(#23436a, #9fc5f7);
+
+  /* Status */
+  --color-danger: #a8261b; /* 7.1:1 / 7.8:1 */
+  --color-danger: light-dark(#a8261b, #ff9184);
+  --color-danger-bg: #fcebe8;
+  --color-danger-bg: light-dark(#fcebe8, #2b1512);
+  --color-danger-border: #f1b8ae;
+  --color-danger-border: light-dark(#f1b8ae, #5c2a23);
+  --color-notice-bg: #fbf4e3;
+  --color-notice-bg: light-dark(#fbf4e3, #262113);
+  --color-notice-border: #e8d4a2;
+  --color-notice-border: light-dark(#e8d4a2, #4b4026);
+  --color-warn-text: #8a4a05; /* 6.9:1 / 9.3:1 */
+  --color-warn-text: light-dark(#8a4a05, #f0b668);
+  --color-warn-bg: #fdf0dd;
+  --color-warn-bg: light-dark(#fdf0dd, #2a2113);
+  --color-warn-border: #edd3a4;
+  --color-warn-border: light-dark(#edd3a4, #4f3f22);
+  --color-good-text: #1d5034;
+  --color-good-text: light-dark(#1d5034, #8ad9a5);
+  --color-good-bg: #e2efe6;
+  --color-good-bg: light-dark(#e2efe6, #16301f);
+
+  /* Interaction and loading */
+  --color-focus: #1a5fd0;
+  --color-focus: light-dark(#1a5fd0, #7aa9ff);
+  --color-focus-on-dark: #8fb8ff;
+  --color-focus-on-dark: light-dark(#8fb8ff, #7aa9ff);
+  --color-skeleton: #e6e3d8;
+  --color-skeleton: light-dark(#e6e3d8, #242b25);
+  --color-skeleton-shine: #f6f5f0;
+  --color-skeleton-shine: light-dark(#f6f5f0, #2f372f);
+
+  /* Depth. Shadows take their color from a token so they deepen in the dark. */
+  --shadow-color: rgb(27 36 32 / 8%);
+  --shadow-color: light-dark(rgb(27 36 32 / 8%), rgb(0 0 0 / 42%));
+  --shadow-color-weak: rgb(27 36 32 / 6%);
+  --shadow-color-weak: light-dark(rgb(27 36 32 / 6%), rgb(0 0 0 / 38%));
+  --shadow-color-strong: rgb(27 36 32 / 18%);
+  --shadow-color-strong: light-dark(rgb(27 36 32 / 18%), rgb(0 0 0 / 60%));
+  --shadow-sm: 0 1px 2px var(--shadow-color-weak);
+  --shadow-md: 0 1px 2px var(--shadow-color-weak), 0 4px 12px var(--shadow-color);
+  --shadow-lg: 0 10px 32px var(--shadow-color-strong);
+
+  --focus-ring: 0 0 0 3px var(--color-focus);
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+/*
+ * `--tile-filter` is not a color, so it cannot go through `light-dark()`.
+ * Street and topo tiles are drawn for white paper and glare at night; the
+ * satellite layer is already dark and opts out in components.css.
+ */
+:root {
+  --tile-filter: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --tile-filter: brightness(0.76) contrast(1.08) saturate(0.85);
+  }
+}
+
+:root[data-theme='dark'] {
+  --tile-filter: brightness(0.76) contrast(1.08) saturate(0.85);
 }
